@@ -31,7 +31,7 @@ func (g Grid) GetPeers(position Position) iter.Seq[Cell] {
 
 // Return the cells in row-major order.
 func (g Grid) Cells() []Cell {
-	return g.cells[:]
+	return slices.Clone(g.cells)
 }
 
 func (g Grid) Clone() Grid {
@@ -39,17 +39,19 @@ func (g Grid) Clone() Grid {
 	return g
 }
 
-// Copy the grid and alter the cell
+// Copy the grid and alter the cell.
 func (g Grid) With(position Position, newCandidates Candidates) Grid {
 	newGrid := g.Clone()
 	newGrid.Set(position, newCandidates)
 	return newGrid
 }
 
-// Alter the cell in place
+// Alter the cell in place. Noop if the position is out of range.
 func (g Grid) Set(position Position, newCandidates Candidates) {
 	index := g.getRowMajorIndex(position)
-	g.cells[index] = g.cells[index].Replace(newCandidates)
+	if index < len(g.cells) {
+		g.cells[index] = g.cells[index].Replace(newCandidates)
+	}
 }
 
 func (g Grid) getRowMajorIndex(position Position) int {

@@ -90,10 +90,10 @@ func toUint8(char byte) uint8 {
 	case '0' <= char && char <= '9':
 		return uint8(char - '0')
 
-	case 'a' <= char && char <= 'f':
+	case 'a' <= char && char <= 'g':
 		return uint8(char-'a') + 10
 
-	case 'A' <= char && char <= 'F':
+	case 'A' <= char && char <= 'G':
 		return uint8(char-'A') + 10
 	}
 	return math.MaxUint8
