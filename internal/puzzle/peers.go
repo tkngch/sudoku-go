@@ -2,6 +2,7 @@ package puzzle
 
 import (
 	"iter"
+	"slices"
 )
 
 type Peers struct {
@@ -60,6 +61,9 @@ func positions(grid GridSize) iter.Seq[Position] {
 	}
 }
 
-func (p Peers) Of(pos Position) []Position {
-	return p.peers[pos]
+// Return an iterator over the peers: the other cells sharing its row, column,
+// or region.
+func (p Peers) Of(pos Position) iter.Seq[Position] {
+	// return an iterator, to prevent the caller from altering the peers.
+	return slices.Values(p.peers[pos])
 }

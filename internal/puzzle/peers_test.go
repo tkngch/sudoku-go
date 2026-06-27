@@ -1,6 +1,7 @@
 package puzzle_test
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -73,7 +74,8 @@ func TestPeersOf(t *testing.T) {
 			testCase.name,
 			func(t2 *testing.T) {
 				peers := puzzle.NewPeers(testCase.grid, testCase.region)
-				assert.ElementsMatch(t2, testCase.expected, peers.Of(testCase.pos))
+				actual := slices.Collect(peers.Of(testCase.pos))
+				assert.ElementsMatch(t2, testCase.expected, actual)
 			},
 		)
 	}

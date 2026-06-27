@@ -20,7 +20,7 @@ func NewGrid(cells []Cell, gridSize GridSize, regionSize RegionSize) Grid {
 
 func (g Grid) GetPeers(position Position) iter.Seq[Cell] {
 	return func(yield func(Cell) bool) {
-		for _, peerPosition := range g.peers.Of(position) {
+		for peerPosition := range g.peers.Of(position) {
 			peer := g.cells[g.getRowMajorIndex(peerPosition)]
 			if !yield(peer) {
 				return
@@ -47,7 +47,7 @@ func (g Grid) With(position Position, newCandidates Candidates) Grid {
 }
 
 // Alter the cell in place. Noop if the position is out of range.
-func (g Grid) Set(position Position, newCandidates Candidates) {
+func (g *Grid) Set(position Position, newCandidates Candidates) {
 	if position.Row() >= g.gridSize.RowCount() ||
 		position.Col() >= g.gridSize.ColCount() {
 		return

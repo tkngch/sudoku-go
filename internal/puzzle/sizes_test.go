@@ -11,14 +11,17 @@ import (
 
 func TestNewGridSizeFromCellCount(t *testing.T) {
 	testCases := []struct {
-		cellCount int
-		expected  puzzle.GridSize
+		cellCount   int
+		expected    puzzle.GridSize
+		errExpected bool
 	}{
-		{144, puzzle.NewGridSize(12)},
-		{81, puzzle.NewGridSize(9)},
-		{36, puzzle.NewGridSize(6)},
-		{16, puzzle.NewGridSize(4)},
-		{99, puzzle.NewGridSize(0)},
+		{cellCount: 144, expected: puzzle.NewGridSize(12), errExpected: false},
+		{cellCount: 81, expected: puzzle.NewGridSize(9), errExpected: false},
+		{cellCount: 36, expected: puzzle.NewGridSize(6), errExpected: false},
+		{cellCount: 16, expected: puzzle.NewGridSize(4), errExpected: false},
+		{cellCount: 99, expected: puzzle.NewGridSize(0), errExpected: true},
+		{cellCount: 0, expected: puzzle.NewGridSize(0), errExpected: true},
+		{cellCount: -16, expected: puzzle.NewGridSize(0), errExpected: true},
 	}
 
 	for _, testCase := range testCases {
@@ -26,7 +29,9 @@ func TestNewGridSizeFromCellCount(t *testing.T) {
 			fmt.Sprintf("NewGridSizeFromCellCount(%d)", testCase.cellCount),
 			func(t2 *testing.T) {
 				size, err := puzzle.NewGridSizeFromCellCount(testCase.cellCount)
-				if testCase.expected.RowCount() != 0 {
+				if testCase.errExpected {
+					require.Error(t2, err)
+				} else {
 					require.NoError(t2, err)
 				}
 				assert.Equal(t2, testCase.expected, size)
@@ -37,14 +42,17 @@ func TestNewGridSizeFromCellCount(t *testing.T) {
 
 func TestNewRegionSizeFromCellCount(t *testing.T) {
 	testCases := []struct {
-		cellCount int
-		expected  puzzle.RegionSize
+		cellCount   int
+		expected    puzzle.RegionSize
+		errExpected bool
 	}{
-		{144, puzzle.NewRegionSize(4, 3)},
-		{81, puzzle.NewRegionSize(3, 3)},
-		{36, puzzle.NewRegionSize(2, 3)},
-		{16, puzzle.NewRegionSize(2, 2)},
-		{99, puzzle.NewRegionSize(0, 0)},
+		{cellCount: 144, expected: puzzle.NewRegionSize(4, 3), errExpected: false},
+		{cellCount: 81, expected: puzzle.NewRegionSize(3, 3), errExpected: false},
+		{cellCount: 36, expected: puzzle.NewRegionSize(2, 3), errExpected: false},
+		{cellCount: 16, expected: puzzle.NewRegionSize(2, 2), errExpected: false},
+		{cellCount: 99, expected: puzzle.NewRegionSize(0, 0), errExpected: true},
+		{cellCount: 0, expected: puzzle.NewRegionSize(0, 0), errExpected: true},
+		{cellCount: -16, expected: puzzle.NewRegionSize(0, 0), errExpected: true},
 	}
 
 	for _, testCase := range testCases {
@@ -52,7 +60,9 @@ func TestNewRegionSizeFromCellCount(t *testing.T) {
 			fmt.Sprintf("NewRegionSizeFromCellCount(%d)", testCase.cellCount),
 			func(t2 *testing.T) {
 				size, err := puzzle.NewRegionSizeFromCellCount(testCase.cellCount)
-				if testCase.expected.RowCount() != 0 {
+				if testCase.errExpected {
+					require.Error(t2, err)
+				} else {
 					require.NoError(t2, err)
 				}
 				assert.Equal(t2, testCase.expected, size)

@@ -28,8 +28,10 @@ func Parse(input string) (Grid, error) {
 		value := toUint8(char)
 		if value >= minCellValue && value <= maxCellValue {
 			candidates = NewCandidate(value)
-		} else {
+		} else if value == 0 || char == '.' {
 			candidates = NewCandidates(maxCellValue)
+		} else {
+			return Grid{}, fmt.Errorf("unexpected value: %c", char)
 		}
 
 		cells[i] = NewCell(position, candidates)
