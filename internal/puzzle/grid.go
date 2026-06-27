@@ -48,10 +48,12 @@ func (g Grid) With(position Position, newCandidates Candidates) Grid {
 
 // Alter the cell in place. Noop if the position is out of range.
 func (g Grid) Set(position Position, newCandidates Candidates) {
-	index := g.getRowMajorIndex(position)
-	if index < len(g.cells) {
-		g.cells[index] = g.cells[index].Replace(newCandidates)
+	if position.Row() >= g.gridSize.RowCount() ||
+		position.Col() >= g.gridSize.ColCount() {
+		return
 	}
+	index := g.getRowMajorIndex(position)
+	g.cells[index] = g.cells[index].Replace(newCandidates)
 }
 
 func (g Grid) getRowMajorIndex(position Position) int {

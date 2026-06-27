@@ -3,7 +3,6 @@ package puzzle
 import (
 	"iter"
 	"math/bits"
-	"strconv"
 	"strings"
 )
 
@@ -60,9 +59,21 @@ func (c Candidates) String() string {
 	vals := make([]string, 0, c.Count())
 
 	for value := range c.Values() {
-		i := bits.TrailingZeros16(uint16(value)) + 1
-		vals = append(vals, strconv.Itoa(i))
+		vals = append(vals, string(value.char()))
 	}
 
-	return strings.Join(vals, ",")
+	return strings.Join(vals, "")
+}
+
+// Return the display char for the first candidate value. 1..9 are mapped to
+// '1'..'9', and 10..16 are mapped 'a'..'g'.
+func (c Candidates) char() byte {
+	v := bits.TrailingZeros16(uint16(c)) + 1
+	switch {
+	case 1 <= v && v <= 9:
+		return byte('0' + v)
+	case 10 <= v && v <= 16:
+		return byte('a' + v - 10)
+	}
+	return '.'
 }

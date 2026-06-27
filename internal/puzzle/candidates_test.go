@@ -185,7 +185,8 @@ func TestCandidatesString(t *testing.T) {
 	}{
 		{name: "0", input: 0b0, expected: ""},
 		{name: "1", input: 0b1, expected: "1"},
-		{name: "1 and 2", input: 0b11, expected: "1,2"},
+		{name: "1 and 2", input: 0b11, expected: "12"},
+		{name: "1, 2, 10, and 16", input: 0b1000001000000011, expected: "12ag"},
 	}
 
 	for _, testCase := range testCases {

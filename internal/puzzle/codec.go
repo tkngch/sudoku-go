@@ -3,7 +3,6 @@ package puzzle
 import (
 	"fmt"
 	"math"
-	"strconv"
 	"strings"
 )
 
@@ -41,8 +40,9 @@ func Parse(input string) (Grid, error) {
 
 // Compact representation of grid.
 func (g Grid) String() string {
-	chars := make([]string, len(g.Cells()))
-	for i, cell := range g.Cells() {
+	cells := g.Cells() // g.Cells() clones a slice, so avoid calling it multiple times
+	chars := make([]string, len(cells))
+	for i, cell := range cells {
 		chars[i] = toString(cell.Candidates())
 	}
 	return strings.Join(chars, "")
@@ -103,20 +103,5 @@ func toString(x Candidates) string {
 	if x.Count() != 1 {
 		return "."
 	}
-
-	asInt, err := strconv.Atoi(x.String())
-	if err != nil {
-		return "."
-	}
-	return string(fromInt(asInt))
-}
-
-func fromInt(x int) byte {
-	if 1 <= x && x <= 9 {
-		return byte('0' + x)
-	}
-	if 10 <= x && x <= 16 {
-		return byte('a' + x - 10)
-	}
-	return '.'
+	return x.String()
 }
