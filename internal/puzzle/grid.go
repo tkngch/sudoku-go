@@ -7,18 +7,17 @@ import (
 
 // Grid is a square sudoku grid of cells in row-major order
 type Grid struct {
-	cells      []Cell
-	peers      Peers
-	gridSize   GridSize
-	regionSize RegionSize
+	cells  []Cell
+	peers  Peers
+	layout Layout
 }
 
-func NewGrid(cells []Cell, gridSize GridSize, regionSize RegionSize) Grid {
-	peers := NewPeers(gridSize, regionSize)
-	return Grid{cells: cells, peers: peers, gridSize: gridSize, regionSize: regionSize}
+func NewGrid(cells []Cell, layout Layout) Grid {
+	peers := NewPeers(layout)
+	return Grid{cells: cells, peers: peers, layout: layout}
 }
 
-func (g Grid) GetPeers(position Position) iter.Seq[Cell] {
+func (g Grid) PeersOf(position Position) iter.Seq[Cell] {
 	return func(yield func(Cell) bool) {
 		for peerPosition := range g.peers.Of(position) {
 			peer := g.cells[g.getRowMajorIndex(peerPosition)]
@@ -29,9 +28,9 @@ func (g Grid) GetPeers(position Position) iter.Seq[Cell] {
 	}
 }
 
-// Return the cells in row-major order.
-func (g Grid) Cells() []Cell {
-	return slices.Clone(g.cells)
+// Iterate over the cells in row-major order.
+func (g Grid) Cells() iter.Seq[Cell] {
+	return slices.Values(g.cells)
 }
 
 func (g Grid) Clone() Grid {
@@ -48,8 +47,8 @@ func (g Grid) With(position Position, newCandidates Candidates) Grid {
 
 // Alter the cell in place. Noop if the position is out of range.
 func (g *Grid) Set(position Position, newCandidates Candidates) {
-	if position.Row() >= g.gridSize.RowCount() ||
-		position.Col() >= g.gridSize.ColCount() {
+	if position.Row() >= g.layout.GridSize() ||
+		position.Col() >= g.layout.GridSize() {
 		return
 	}
 	index := g.getRowMajorIndex(position)
@@ -57,5 +56,5 @@ func (g *Grid) Set(position Position, newCandidates Candidates) {
 }
 
 func (g Grid) getRowMajorIndex(position Position) int {
-	return int(position.Row())*int(g.gridSize.ColCount()) + int(position.Col())
+	return int(position.Row())*int(g.layout.GridSize()) + int(position.Col())
 }

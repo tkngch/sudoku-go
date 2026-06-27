@@ -57,8 +57,9 @@ func TestParseStringRoundTrip(t *testing.T) {
 		name  string
 		input string
 	}{
+		{name: "4x4 all missing", input: strings.Repeat(".", 16)},
 		{name: "4x4", input: strings.Repeat("1234", 4)},
-		{name: "9x9 all givens", input: strings.Repeat("123456789", 9)},
+		{name: "9x9", input: strings.Repeat("123456789", 9)},
 		{name: "12x12 with hex digits", input: strings.Repeat("123456789abc", 12)},
 	}
 
@@ -76,22 +77,20 @@ func TestParseStringRoundTrip(t *testing.T) {
 
 func TestGridRender(t *testing.T) {
 	testCases := []struct {
-		name       string
-		grid       [][]uint8
-		gridSize   puzzle.GridSize
-		regionSize puzzle.RegionSize
-		expected   string
+		name     string
+		grid     [][]uint8
+		layout   puzzle.Layout
+		expected string
 	}{
 		{
-			name: "4x4 grid, 2x2 region",
+			name: "4x4 grid, 2x2 blocks",
 			grid: [][]uint8{
 				{1, 2, 3, 4},
 				{3, 4, 1, 2},
 				{4, 3, 2, 1},
 				{2, 1, 4, 0},
 			},
-			gridSize:   puzzle.NewGridSize(4),
-			regionSize: puzzle.NewRegionSize(2, 2),
+			layout: puzzle.NewLayout(2, 2),
 			expected: ("+-----+-----+\n" +
 				"| 1 2 | 3 4 |\n" +
 				"| 3 4 | 1 2 |\n" +
@@ -99,11 +98,10 @@ func TestGridRender(t *testing.T) {
 				"| 4 3 | 2 1 |\n" +
 				"| 2 1 | 4 . |\n" +
 				"+-----+-----+\n" +
-				"Grid Size: 4 by 4\n" +
-				"Region Size: 2 by 2"),
+				"4-by-4 grid with 4 2-by-2 blocks"),
 		},
 		{
-			name: "6x6 grid, 2x3 region",
+			name: "6x6 grid, 2x3 blocks",
 			grid: [][]uint8{
 				{0, 2, 3, 4, 5, 6},
 				{4, 5, 6, 1, 2, 3},
@@ -112,8 +110,7 @@ func TestGridRender(t *testing.T) {
 				{3, 1, 2, 6, 4, 5},
 				{6, 4, 5, 3, 1, 2},
 			},
-			gridSize:   puzzle.NewGridSize(6),
-			regionSize: puzzle.NewRegionSize(2, 3),
+			layout: puzzle.NewLayout(2, 3),
 			expected: ("+-------+-------+\n" +
 				"| . 2 3 | 4 5 6 |\n" +
 				"| 4 5 6 | 1 2 3 |\n" +
@@ -124,8 +121,7 @@ func TestGridRender(t *testing.T) {
 				"| 3 1 2 | 6 4 5 |\n" +
 				"| 6 4 5 | 3 1 2 |\n" +
 				"+-------+-------+\n" +
-				"Grid Size: 6 by 6\n" +
-				"Region Size: 2 by 3"),
+				"6-by-6 grid with 6 2-by-3 blocks"),
 		},
 	}
 
@@ -133,7 +129,7 @@ func TestGridRender(t *testing.T) {
 		t.Run(
 			testCase.name,
 			func(t2 *testing.T) {
-				grid := newGrid(testCase.grid, testCase.gridSize, testCase.regionSize)
+				grid := newGrid(testCase.grid, testCase.layout)
 				assert.Equal(t2, testCase.expected, grid.Render())
 			},
 		)

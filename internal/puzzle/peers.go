@@ -9,19 +9,19 @@ type Peers struct {
 	peers map[Position][]Position
 }
 
-func NewPeers(grid GridSize, region RegionSize) Peers {
-	peers := make(map[Position][]Position, grid.RowCount()*grid.ColCount())
+func NewPeers(layout Layout) Peers {
+	peers := make(map[Position][]Position, layout.GridSize()*layout.GridSize())
 
-	regionPeerCount := region.RowCount()*region.ColCount() - 1
-	rowPeerCount := grid.RowCount() - region.RowCount()
-	colPeerCount := grid.ColCount() - region.ColCount()
-	peerCount := regionPeerCount + rowPeerCount + colPeerCount
+	blockPeerCount := layout.BlockRowCount()*layout.BlockColCount() - 1
+	rowPeerCount := layout.GridSize() - layout.BlockRowCount()
+	colPeerCount := layout.GridSize() - layout.BlockColCount()
+	peerCount := blockPeerCount + rowPeerCount + colPeerCount
 
-	for this := range positions(grid) {
+	for this := range positions(layout.GridSize()) {
 		thisPeers := make([]Position, 0, peerCount)
 
-		for that := range positions(grid) {
-			if arePeers(this, that, region) {
+		for that := range positions(layout.GridSize()) {
+			if arePeers(this, that, layout) {
 				thisPeers = append(thisPeers, that)
 			}
 		}
@@ -31,7 +31,7 @@ func NewPeers(grid GridSize, region RegionSize) Peers {
 	return Peers{peers: peers}
 }
 
-func arePeers(this, that Position, region RegionSize) bool {
+func arePeers(this, that Position, layout Layout) bool {
 	if this == that {
 		return false
 	}
@@ -44,15 +44,21 @@ func arePeers(this, that Position, region RegionSize) bool {
 		return true
 	}
 
-	thisRegion := NewPosition(this.Row()/region.RowCount(), this.Col()/region.ColCount())
-	thatRegion := NewPosition(that.Row()/region.RowCount(), that.Col()/region.ColCount())
-	return thisRegion == thatRegion
+	thisBlock := NewPosition(
+		this.Row()/layout.BlockRowCount(),
+		this.Col()/layout.BlockColCount(),
+	)
+	thatBlock := NewPosition(
+		that.Row()/layout.BlockRowCount(),
+		that.Col()/layout.BlockColCount(),
+	)
+	return thisBlock == thatBlock
 }
 
-func positions(grid GridSize) iter.Seq[Position] {
+func positions(gridSize uint8) iter.Seq[Position] {
 	return func(yield func(Position) bool) {
-		for row := range grid.RowCount() {
-			for col := range grid.ColCount() {
+		for row := range gridSize {
+			for col := range gridSize {
 				if !yield(NewPosition(row, col)) {
 					return
 				}
@@ -62,7 +68,7 @@ func positions(grid GridSize) iter.Seq[Position] {
 }
 
 // Return an iterator over the peers: the other cells sharing its row, column,
-// or region.
+// or block.
 func (p Peers) Of(pos Position) iter.Seq[Position] {
 	// return an iterator, to prevent the caller from altering the peers.
 	return slices.Values(p.peers[pos])
