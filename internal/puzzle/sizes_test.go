@@ -49,7 +49,7 @@ func TestNewRegionSizeFromCellCount(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(
-			fmt.Sprintf("NewGridSizeFromCellCount(%d)", testCase.cellCount),
+			fmt.Sprintf("NewRegionSizeFromCellCount(%d)", testCase.cellCount),
 			func(t2 *testing.T) {
 				size, err := puzzle.NewRegionSizeFromCellCount(testCase.cellCount)
 				if testCase.expected.RowCount() != 0 {
