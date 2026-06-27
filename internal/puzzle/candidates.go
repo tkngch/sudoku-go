@@ -9,10 +9,10 @@ import (
 
 // Candidate values of a cell, where value x is represented with the x-th lowest bit.
 // For example
-// - 0001 indicates that the cell takes the value of 1;
-// - 0010 indicates that the cell takes the value of 2;
-// - 0011 indicates that the cell takes the value of 1 or 2; and
-// - 0111 indicates that the cell takes the value of 1 or 2 or 3.
+// - 0b001 indicates that the cell takes the value of 1;
+// - 0b010 indicates that the cell takes the value of 2;
+// - 0b011 indicates that the cell takes the value of 1 or 2; and
+// - 0b111 indicates that the cell takes the value of 1 or 2 or 3.
 type Candidates uint16
 
 // Given that Candidates has 16 bit width, the max value it can represent is 16.
@@ -38,6 +38,9 @@ func (c Candidates) Drop(other Candidates) Candidates {
 	return c &^ other
 }
 
+// Iterate over each set candidate as a single-bit Candidates, in ascending
+// value order. For example, the set {1, 3} (represented as 0b101) yields 0b001
+// then 0b100.
 func (c Candidates) Values() iter.Seq[Candidates] {
 	return func(yield func(Candidates) bool) {
 		for num := uint8(1); num <= maxCandidateValue; num++ {
