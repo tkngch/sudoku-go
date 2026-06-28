@@ -80,7 +80,7 @@ func (g Grid) rowSeparator() string {
 	blockCount := g.layout.GridSize() / g.layout.BlockColCount()
 	separators := make([]string, blockCount)
 	for i := range blockCount {
-		separators[i] = strings.Repeat("-", int(g.layout.BlockColCount())*2+1)
+		separators[i] = strings.Repeat("-", g.layout.BlockColCount()*2+1)
 	}
 	return "+" + strings.Join(separators, "+") + "+"
 }

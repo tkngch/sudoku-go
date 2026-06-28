@@ -9,7 +9,6 @@ import (
 // Grid is a square sudoku grid of cells in row-major order
 type Grid struct {
 	cells  []Cell
-	peers  Peers
 	layout Layout
 }
 
@@ -19,13 +18,12 @@ func NewGrid(cells []Cell, layout Layout) (Grid, error) {
 		return Grid{}, err
 	}
 
-	peers := NewPeers(layout)
-	return Grid{cells: cells, peers: peers, layout: layout}, nil
+	return Grid{cells: cells, layout: layout}, nil
 }
 
 func (g Grid) PeersOf(position Position) iter.Seq[Cell] {
 	return func(yield func(Cell) bool) {
-		for peerPosition := range g.peers.Of(position) {
+		for peerPosition := range g.layout.PeersOf(position) {
 			peer := g.cells[g.layout.RowMajorIndex(peerPosition)]
 			if !yield(peer) {
 				return

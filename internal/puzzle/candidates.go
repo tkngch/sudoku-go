@@ -25,6 +25,9 @@ func NewCandidates(valueCount uint8) Candidates {
 	return d
 }
 
+// Make a new candidate that represents the provided value. Only values from 1
+// to 16 are supported. NewCandidate(17), for example, returns an empty
+// candidates.
 func NewCandidate(value uint8) Candidates {
 	return 1 << (value - 1)
 }

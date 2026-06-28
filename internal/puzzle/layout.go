@@ -3,6 +3,8 @@ package puzzle
 import (
 	"errors"
 	"fmt"
+	"iter"
+	"slices"
 )
 
 type Layout struct {
@@ -10,6 +12,7 @@ type Layout struct {
 }
 
 var ErrInvalidCellCount = errors.New("invalid cell count")
+var cachedPeers = make(map[Layout][][]Position)
 
 func NewLayoutFromCellCount(cellCount int) (Layout, error) {
 	switch cellCount {
@@ -43,16 +46,74 @@ func (l Layout) PeerCount() int {
 	return blockPeerCount + rowPeerCount + colPeerCount
 }
 
-func (l Layout) AreInSameBlock(this, that Position) bool {
-	thisBlock := NewPosition(
-		this.Row()/l.blockRowCount,
-		this.Col()/l.blockColCount,
+func (l Layout) PeersOf(position Position) iter.Seq[Position] {
+	if !l.IsOnGrid(position) {
+		return func(yield func(Position) bool) {}
+	}
+
+	peers, isCached := cachedPeers[l]
+	if !isCached {
+		peers = l.allPeers()
+		cachedPeers[l] = peers
+	}
+
+	// return an iterator, to prevent the caller from altering the peers.
+	return slices.Values(peers[l.RowMajorIndex(position)])
+}
+
+func (l Layout) allPeers() [][]Position {
+	peers := make([][]Position, l.CellCount())
+	peerCount := l.PeerCount()
+
+	for this := range l.allPositions() {
+		thisPeers := make([]Position, 0, peerCount)
+
+		for that := range l.allPositions() {
+			if l.arePeers(this, that) {
+				thisPeers = append(thisPeers, that)
+			}
+		}
+
+		peers[l.RowMajorIndex(this)] = thisPeers
+	}
+	return peers
+}
+
+func (l Layout) allPositions() iter.Seq[Position] {
+	return func(yield func(Position) bool) {
+		for row := range l.GridSize() {
+			for col := range l.GridSize() {
+				if !yield(NewPosition(row, col)) {
+					return
+				}
+			}
+		}
+	}
+}
+
+func (l Layout) arePeers(a, b Position) bool {
+	if a == b {
+		return false
+	}
+	if a.Row() == b.Row() {
+		return true
+	}
+	if a.Col() == b.Col() {
+		return true
+	}
+	return l.areInSameBlock(a, b)
+}
+
+func (l Layout) areInSameBlock(a, b Position) bool {
+	blockA := NewPosition(
+		a.Row()/l.blockRowCount,
+		a.Col()/l.blockColCount,
 	)
-	thatBlock := NewPosition(
-		that.Row()/l.blockRowCount,
-		that.Col()/l.blockColCount,
+	blockB := NewPosition(
+		b.Row()/l.blockRowCount,
+		b.Col()/l.blockColCount,
 	)
-	return thisBlock == thatBlock
+	return blockA == blockB
 }
 
 func (l Layout) IsOnGrid(position Position) bool {
@@ -64,16 +125,16 @@ func (l Layout) IsOnGrid(position Position) bool {
 
 func (l Layout) IsFirstColumnInBlock(position Position) bool {
 	return position.Col() == 0 ||
-		!l.AreInSameBlock(position, NewPosition(position.Row(), position.Col()-1))
+		!l.areInSameBlock(position, NewPosition(position.Row(), position.Col()-1))
 }
 
 func (l Layout) IsFirstRowInBlock(position Position) bool {
 	return position.Row() == 0 ||
-		!l.AreInSameBlock(position, NewPosition(position.Row()-1, position.Col()))
+		!l.areInSameBlock(position, NewPosition(position.Row()-1, position.Col()))
 }
 
 func (l Layout) RowMajorIndex(position Position) int {
-	return int(position.Row())*int(l.GridSize()) + int(position.Col())
+	return position.Row()*l.GridSize() + position.Col()
 }
 
 func (l Layout) String() string {

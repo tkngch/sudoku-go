@@ -162,7 +162,7 @@ func TestGridPeersOf(t *testing.T) {
 }
 
 func newGrid(rows [][]uint8, layout puzzle.Layout) puzzle.Grid {
-	cells := make([]puzzle.Cell, 0, int(layout.GridSize())*int(layout.GridSize()))
+	cells := make([]puzzle.Cell, 0, layout.GridSize()*layout.GridSize())
 	for row, rowValues := range rows {
 		for col, value := range rowValues {
 			position := puzzle.NewPosition(row, col)
