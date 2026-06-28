@@ -1,7 +1,6 @@
 package puzzle_test
 
 import (
-	"fmt"
 	"slices"
 	"testing"
 
