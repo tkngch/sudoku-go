@@ -1,6 +1,7 @@
 package puzzle
 
 import (
+	"fmt"
 	"iter"
 	"slices"
 )
@@ -12,15 +13,20 @@ type Grid struct {
 	layout Layout
 }
 
-func NewGrid(cells []Cell, layout Layout) Grid {
+func NewGrid(cells []Cell, layout Layout) (Grid, error) {
+	if len(cells) != layout.CellCount() {
+		err := fmt.Errorf("expected %d cells, got %d", layout.CellCount(), len(cells))
+		return Grid{}, err
+	}
+
 	peers := NewPeers(layout)
-	return Grid{cells: cells, peers: peers, layout: layout}
+	return Grid{cells: cells, peers: peers, layout: layout}, nil
 }
 
 func (g Grid) PeersOf(position Position) iter.Seq[Cell] {
 	return func(yield func(Cell) bool) {
 		for peerPosition := range g.peers.Of(position) {
-			peer := g.cells[g.getRowMajorIndex(peerPosition)]
+			peer := g.cells[g.layout.RowMajorIndex(peerPosition)]
 			if !yield(peer) {
 				return
 			}
@@ -50,10 +56,6 @@ func (g *Grid) Set(position Position, newCandidates Candidates) {
 	if !g.layout.IsOnGrid(position) {
 		return
 	}
-	index := g.getRowMajorIndex(position)
+	index := g.layout.RowMajorIndex(position)
 	g.cells[index] = g.cells[index].Replace(newCandidates)
-}
-
-func (g Grid) getRowMajorIndex(position Position) int {
-	return int(position.Row())*int(g.layout.GridSize()) + int(position.Col())
 }

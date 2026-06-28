@@ -155,7 +155,7 @@ func TestCandidatesRemove(t *testing.T) {
 	}
 }
 
-func TestCandidatesEach(t *testing.T) {
+func TestCandidatesAll(t *testing.T) {
 	testCases := []struct {
 		name     string
 		input    puzzle.Candidates
@@ -170,7 +170,7 @@ func TestCandidatesEach(t *testing.T) {
 		t.Run(
 			testCase.name,
 			func(t2 *testing.T) {
-				actual := slices.Collect(testCase.input.Each())
+				actual := slices.Collect(testCase.input.All())
 				assert.Equal(t2, testCase.expected, actual)
 			},
 		)

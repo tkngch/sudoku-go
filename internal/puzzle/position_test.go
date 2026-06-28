@@ -10,6 +10,6 @@ import (
 func TestPosition(t *testing.T) {
 	pos := puzzle.NewPosition(3, 5)
 
-	assert.Equal(t, uint(3), pos.Row())
-	assert.Equal(t, uint(5), pos.Col())
+	assert.Equal(t, 3, pos.Row())
+	assert.Equal(t, 5, pos.Col())
 }

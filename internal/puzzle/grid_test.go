@@ -1,6 +1,7 @@
 package puzzle_test
 
 import (
+	"fmt"
 	"slices"
 	"testing"
 
@@ -165,9 +166,9 @@ func newGrid(rows [][]uint8, layout puzzle.Layout) puzzle.Grid {
 	cells := make([]puzzle.Cell, 0, int(layout.GridSize())*int(layout.GridSize()))
 	for row, rowValues := range rows {
 		for col, value := range rowValues {
-			position := puzzle.NewPosition(uint(row), uint(col))
+			position := puzzle.NewPosition(row, col)
 			cells = append(cells, puzzle.NewCell(position, puzzle.NewCandidate(value)))
 		}
 	}
-	return puzzle.NewGrid(cells, layout)
+	return Must(puzzle.NewGrid(cells, layout))
 }

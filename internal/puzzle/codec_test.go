@@ -11,30 +11,40 @@ import (
 
 func TestParse(t *testing.T) {
 	testCases := []struct {
-		name        string
-		input       string
-		expected    puzzle.Grid
-		errExpected bool
+		name          string
+		input         string
+		expected      puzzle.Grid
+		expectedError error
 	}{
-		{name: "empty", input: "", expected: puzzle.Grid{}, errExpected: true},
-		{name: "too short", input: "123", expected: puzzle.Grid{}, errExpected: true},
 		{
-			name:        "too large",
-			input:       strings.Repeat(".", 255),
-			expected:    puzzle.Grid{},
-			errExpected: true,
+			name:          "empty",
+			input:         "",
+			expected:      puzzle.Grid{},
+			expectedError: puzzle.ErrInvalidCellCount,
 		},
 		{
-			name:        "unexpectedly large value",
-			input:       "9234123412341234", // 9 is unexpected for 4x4 grid
-			expected:    puzzle.Grid{},
-			errExpected: true,
+			name:          "too short",
+			input:         "123",
+			expected:      puzzle.Grid{},
+			expectedError: puzzle.ErrInvalidCellCount,
 		},
 		{
-			name:        "unexpected value",
-			input:       "z234123412341234", // z is unexpected
-			expected:    puzzle.Grid{},
-			errExpected: true,
+			name:          "too large",
+			input:         strings.Repeat(".", 255),
+			expected:      puzzle.Grid{},
+			expectedError: puzzle.ErrInvalidCellCount,
+		},
+		{
+			name:          "unexpectedly large value",
+			input:         "9234123412341234", // 9 is unexpected for 4x4 grid
+			expected:      puzzle.Grid{},
+			expectedError: puzzle.ErrInvalidCharacter,
+		},
+		{
+			name:          "unexpected value",
+			input:         "z234123412341234", // z is unexpected
+			expected:      puzzle.Grid{},
+			expectedError: puzzle.ErrInvalidCharacter,
 		},
 	}
 
@@ -43,8 +53,8 @@ func TestParse(t *testing.T) {
 			testCase.name,
 			func(t2 *testing.T) {
 				grid, err := puzzle.Parse(testCase.input)
-				if testCase.errExpected {
-					require.Error(t2, err)
+				if testCase.expectedError != nil {
+					require.ErrorIs(t2, err, testCase.expectedError)
 				}
 				assert.Equal(t2, testCase.expected, grid)
 			},

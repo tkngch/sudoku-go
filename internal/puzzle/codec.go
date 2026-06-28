@@ -1,13 +1,16 @@
 package puzzle
 
 import (
+	"errors"
 	"fmt"
 	"slices"
 	"strings"
 )
 
+var ErrInvalidCharacter = errors.New("invalid character")
+
 func Parse(input string) (Grid, error) {
-	cellCount := uint(len(input))
+	cellCount := len(input)
 
 	layout, err := NewLayoutFromCellCount(cellCount)
 	if err != nil {
@@ -24,16 +27,16 @@ func Parse(input string) (Grid, error) {
 		value, isOk := toUint8(char)
 		if isOk && value >= minCellValue && value <= maxCellValue {
 			candidates = NewCandidate(value)
-		} else if isOk && (value == 0 || char == '.') {
+		} else if isOk && value == 0 {
 			candidates = NewCandidates(maxCellValue)
 		} else {
-			return Grid{}, fmt.Errorf("parse: unexpected value: %c", char)
+			return Grid{}, fmt.Errorf("parse %q: %w", char, ErrInvalidCharacter)
 		}
 
 		cells[i] = NewCell(position, candidates)
 
 	}
-	return NewGrid(cells, layout), nil
+	return NewGrid(cells, layout)
 }
 
 // Compact representation of grid.
@@ -60,7 +63,7 @@ func (g Grid) Render() string {
 		}
 		row = append(row, toString(cell.Candidates()))
 
-		if cell.position.col == g.layout.GridSize()-1 {
+		if cell.Position().Col() == g.layout.GridSize()-1 {
 			row = append(row, "|")
 			rowsAsString = append(rowsAsString, strings.Join(row, " "))
 			row = row[:0]

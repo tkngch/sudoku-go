@@ -70,6 +70,11 @@ func TestPeersOf(t *testing.T) {
 				peers := puzzle.NewPeers(testCase.layout)
 				actual := slices.Collect(peers.Of(testCase.pos))
 				assert.ElementsMatch(t2, testCase.expected, actual)
+
+				// test invariant: if A is a peer of B, B should a peer of A as well.
+				for _, peer := range testCase.expected {
+					assert.Contains(t, slices.Collect(peers.Of(peer)), testCase.pos)
+				}
 			},
 		)
 	}

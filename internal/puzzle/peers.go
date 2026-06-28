@@ -6,12 +6,12 @@ import (
 )
 
 type Peers struct {
-	peers map[Position][]Position
+	peers  [][]Position
+	layout Layout
 }
 
 func NewPeers(layout Layout) Peers {
-	peers := make(map[Position][]Position, int(layout.GridSize())*int(layout.GridSize()))
-
+	peers := make([][]Position, layout.CellCount())
 	peerCount := layout.PeerCount()
 
 	for this := range positions(layout.GridSize()) {
@@ -23,9 +23,9 @@ func NewPeers(layout Layout) Peers {
 			}
 		}
 
-		peers[this] = thisPeers
+		peers[layout.RowMajorIndex(this)] = thisPeers
 	}
-	return Peers{peers: peers}
+	return Peers{peers: peers, layout: layout}
 }
 
 func arePeers(this, that Position, layout Layout) bool {
@@ -44,7 +44,7 @@ func arePeers(this, that Position, layout Layout) bool {
 	return layout.AreInSameBlock(this, that)
 }
 
-func positions(gridSize uint) iter.Seq[Position] {
+func positions(gridSize int) iter.Seq[Position] {
 	return func(yield func(Position) bool) {
 		for row := range gridSize {
 			for col := range gridSize {
@@ -59,6 +59,9 @@ func positions(gridSize uint) iter.Seq[Position] {
 // Return an iterator over the peers: the other cells sharing its row, column,
 // or block.
 func (p Peers) Of(pos Position) iter.Seq[Position] {
-	// return an iterator, to prevent the caller from altering the peers.
-	return slices.Values(p.peers[pos])
+	if p.layout.IsOnGrid(pos) {
+		// return an iterator, to prevent the caller from altering the peers.
+		return slices.Values(p.peers[p.layout.RowMajorIndex(pos)])
+	}
+	return func(yield func(Position) bool) {}
 }
