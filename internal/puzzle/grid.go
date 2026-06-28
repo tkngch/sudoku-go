@@ -1,6 +1,7 @@
 package puzzle
 
 import (
+	"errors"
 	"fmt"
 	"iter"
 	"slices"
@@ -12,10 +13,26 @@ type Grid struct {
 	layout Layout
 }
 
+var ErrInvalidCells = errors.New("invalid cells")
+
 func NewGrid(cells []Cell, layout Layout) (Grid, error) {
 	if len(cells) != layout.CellCount() {
-		err := fmt.Errorf("expected %d cells, got %d", layout.CellCount(), len(cells))
+		err := fmt.Errorf(
+			"expected %d cells, got %d: %w",
+			layout.CellCount(), len(cells), ErrInvalidCells,
+		)
 		return Grid{}, err
+	}
+
+	for i, cell := range cells {
+		expected := NewPosition(i/layout.GridSize(), i%layout.GridSize())
+		if cell.Position() != expected {
+			err := fmt.Errorf(
+				"cells are not row-major ordered (cell %d has position %v when %v is expected): %w",
+				i, cell.Position(), expected, ErrInvalidCells,
+			)
+			return Grid{}, err
+		}
 	}
 
 	return Grid{cells: cells, layout: layout}, nil

@@ -44,7 +44,7 @@ func (g Grid) String() string {
 	cells := slices.Collect(g.Cells())
 	chars := make([]string, len(cells))
 	for i, cell := range cells {
-		chars[i] = toString(cell.Candidates())
+		chars[i] = toValue(cell.Candidates())
 	}
 	return strings.Join(chars, "")
 }
@@ -61,7 +61,7 @@ func (g Grid) Render() string {
 		if g.layout.IsFirstColumnInBlock(cell.Position()) {
 			row = append(row, "|")
 		}
-		row = append(row, toString(cell.Candidates()))
+		row = append(row, toValue(cell.Candidates()))
 
 		if cell.Position().Col() == g.layout.GridSize()-1 {
 			row = append(row, "|")
@@ -102,7 +102,7 @@ func toUint8(char byte) (uint8, bool) {
 	return 0, false
 }
 
-func toString(x Candidates) string {
+func toValue(x Candidates) string {
 	if x.Count() != 1 {
 		return "."
 	}

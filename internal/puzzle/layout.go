@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"iter"
 	"slices"
+	"sync"
 )
 
 type Layout struct {
@@ -12,7 +13,9 @@ type Layout struct {
 }
 
 var ErrInvalidCellCount = errors.New("invalid cell count")
-var cachedPeers = make(map[Layout][][]Position)
+
+// Hold peer positions per layout
+var cachedPeers sync.Map
 
 func NewLayoutFromCellCount(cellCount int) (Layout, error) {
 	switch cellCount {
@@ -41,8 +44,8 @@ func (l Layout) CellCount() int { return l.GridSize() * l.GridSize() }
 
 func (l Layout) PeerCount() int {
 	blockPeerCount := l.blockRowCount*l.blockColCount - 1
-	rowPeerCount := l.GridSize() - l.blockRowCount
-	colPeerCount := l.GridSize() - l.blockColCount
+	rowPeerCount := l.GridSize() - l.blockColCount
+	colPeerCount := l.GridSize() - l.blockRowCount
 	return blockPeerCount + rowPeerCount + colPeerCount
 }
 
@@ -51,11 +54,11 @@ func (l Layout) PeersOf(position Position) iter.Seq[Position] {
 		return func(yield func(Position) bool) {}
 	}
 
-	peers, isCached := cachedPeers[l]
+	cached, isCached := cachedPeers.Load(l)
 	if !isCached {
-		peers = l.allPeers()
-		cachedPeers[l] = peers
+		cached, _ = cachedPeers.LoadOrStore(l, l.allPeers())
 	}
+	peers := cached.([][]Position)
 
 	// return an iterator, to prevent the caller from altering the peers.
 	return slices.Values(peers[l.RowMajorIndex(position)])
