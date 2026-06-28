@@ -10,12 +10,9 @@ type Peers struct {
 }
 
 func NewPeers(layout Layout) Peers {
-	peers := make(map[Position][]Position, layout.GridSize()*layout.GridSize())
+	peers := make(map[Position][]Position, int(layout.GridSize())*int(layout.GridSize()))
 
-	blockPeerCount := layout.BlockRowCount()*layout.BlockColCount() - 1
-	rowPeerCount := layout.GridSize() - layout.BlockRowCount()
-	colPeerCount := layout.GridSize() - layout.BlockColCount()
-	peerCount := blockPeerCount + rowPeerCount + colPeerCount
+	peerCount := layout.PeerCount()
 
 	for this := range positions(layout.GridSize()) {
 		thisPeers := make([]Position, 0, peerCount)
@@ -44,18 +41,10 @@ func arePeers(this, that Position, layout Layout) bool {
 		return true
 	}
 
-	thisBlock := NewPosition(
-		this.Row()/layout.BlockRowCount(),
-		this.Col()/layout.BlockColCount(),
-	)
-	thatBlock := NewPosition(
-		that.Row()/layout.BlockRowCount(),
-		that.Col()/layout.BlockColCount(),
-	)
-	return thisBlock == thatBlock
+	return layout.AreInSameBlock(this, that)
 }
 
-func positions(gridSize uint8) iter.Seq[Position] {
+func positions(gridSize uint) iter.Seq[Position] {
 	return func(yield func(Position) bool) {
 		for row := range gridSize {
 			for col := range gridSize {

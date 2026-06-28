@@ -79,7 +79,7 @@ func TestNewCandidates(t *testing.T) {
 	}
 }
 
-func TestCandidatesAdd(t *testing.T) {
+func TestCandidatesUnion(t *testing.T) {
 	testCases := []struct {
 		name         string
 		initialValue puzzle.Candidates
@@ -112,7 +112,7 @@ func TestCandidatesAdd(t *testing.T) {
 			func(t2 *testing.T) {
 				value := testCase.initialValue
 				for _, add := range testCase.adders {
-					value = value.Add(add)
+					value = value.Union(add)
 				}
 				assert.Equal(t2, testCase.expected, value)
 			},
@@ -120,7 +120,7 @@ func TestCandidatesAdd(t *testing.T) {
 	}
 }
 
-func TestCandidatesDrop(t *testing.T) {
+func TestCandidatesRemove(t *testing.T) {
 	testCases := []struct {
 		name         string
 		initialValue puzzle.Candidates
@@ -147,7 +147,7 @@ func TestCandidatesDrop(t *testing.T) {
 			func(t2 *testing.T) {
 				value := testCase.initialValue
 				for _, sub := range testCase.substracters {
-					value = value.Drop(sub)
+					value = value.Remove(sub)
 				}
 				assert.Equal(t2, testCase.expected, value)
 			},
@@ -155,7 +155,7 @@ func TestCandidatesDrop(t *testing.T) {
 	}
 }
 
-func TestCandidatesSingleValues(t *testing.T) {
+func TestCandidatesEach(t *testing.T) {
 	testCases := []struct {
 		name     string
 		input    puzzle.Candidates
@@ -170,7 +170,7 @@ func TestCandidatesSingleValues(t *testing.T) {
 		t.Run(
 			testCase.name,
 			func(t2 *testing.T) {
-				actual := slices.Collect(testCase.input.Values())
+				actual := slices.Collect(testCase.input.Each())
 				assert.Equal(t2, testCase.expected, actual)
 			},
 		)

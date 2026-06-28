@@ -17,7 +17,7 @@ func TestPeersOf(t *testing.T) {
 	}{
 		{
 			name:   "4x4 corner (0,0)",
-			layout: puzzle.NewLayout(2, 2),
+			layout: Must(puzzle.NewLayoutFromCellCount(16)),
 			pos:    puzzle.NewPosition(0, 0),
 			expected: []puzzle.Position{
 				puzzle.NewPosition(0, 1), puzzle.NewPosition(0, 2), puzzle.NewPosition(0, 3), // row
@@ -27,7 +27,7 @@ func TestPeersOf(t *testing.T) {
 		},
 		{
 			name:   "4x4 non-corner (1,2)",
-			layout: puzzle.NewLayout(2, 2),
+			layout: Must(puzzle.NewLayoutFromCellCount(16)),
 			pos:    puzzle.NewPosition(1, 2),
 			expected: []puzzle.Position{
 				puzzle.NewPosition(1, 0), puzzle.NewPosition(1, 1), puzzle.NewPosition(1, 3), // row
@@ -37,7 +37,7 @@ func TestPeersOf(t *testing.T) {
 		},
 		{
 			name:   "6x6 with 2x3 block (2,2)",
-			layout: puzzle.NewLayout(2, 3),
+			layout: Must(puzzle.NewLayoutFromCellCount(36)),
 			pos:    puzzle.NewPosition(2, 2),
 			expected: []puzzle.Position{
 				puzzle.NewPosition(2, 0), puzzle.NewPosition(2, 1), puzzle.NewPosition(2, 3), puzzle.NewPosition(2, 4), puzzle.NewPosition(2, 5), // row
@@ -47,7 +47,7 @@ func TestPeersOf(t *testing.T) {
 		},
 		{
 			name:   "6x6 with 2x3 block (0,0)",
-			layout: puzzle.NewLayout(2, 3),
+			layout: Must(puzzle.NewLayoutFromCellCount(36)),
 			pos:    puzzle.NewPosition(0, 0),
 			expected: []puzzle.Position{
 				puzzle.NewPosition(0, 1), puzzle.NewPosition(0, 2), puzzle.NewPosition(0, 3), puzzle.NewPosition(0, 4), puzzle.NewPosition(0, 5), // row
@@ -57,7 +57,7 @@ func TestPeersOf(t *testing.T) {
 		},
 		{
 			name:     "4x4 invalid position",
-			layout:   puzzle.NewLayout(2, 2),
+			layout:   Must(puzzle.NewLayoutFromCellCount(16)),
 			pos:      puzzle.NewPosition(99, 99),
 			expected: []puzzle.Position{},
 		},

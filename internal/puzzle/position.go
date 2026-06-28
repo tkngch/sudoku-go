@@ -3,17 +3,17 @@ package puzzle
 import "fmt"
 
 type Position struct {
-	row uint8
-	col uint8
+	row uint
+	col uint
 }
 
-func NewPosition(row, col uint8) Position {
+func NewPosition(row, col uint) Position {
 	return Position{row: row, col: col}
 }
 
-func (p Position) Row() uint8 { return p.row }
+func (p Position) Row() uint { return p.row }
 
-func (p Position) Col() uint8 { return p.col }
+func (p Position) Col() uint { return p.col }
 
 func (p Position) String() string {
 	return fmt.Sprintf("(%d,%d)", p.row, p.col)

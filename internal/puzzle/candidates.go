@@ -29,18 +29,18 @@ func NewCandidate(value uint8) Candidates {
 	return 1 << (value - 1)
 }
 
-func (c Candidates) Add(other Candidates) Candidates {
+func (c Candidates) Union(other Candidates) Candidates {
 	return c | other
 }
 
-func (c Candidates) Drop(other Candidates) Candidates {
+func (c Candidates) Remove(other Candidates) Candidates {
 	return c &^ other
 }
 
 // Iterate over each set candidate as a single-bit Candidates, in ascending
 // value order. For example, the set {1, 3} (represented as 0b101) yields 0b001
 // then 0b100.
-func (c Candidates) Values() iter.Seq[Candidates] {
+func (c Candidates) Each() iter.Seq[Candidates] {
 	return func(yield func(Candidates) bool) {
 		for num := uint8(1); num <= maxCandidateValue; num++ {
 			value := NewCandidate(num)
@@ -58,7 +58,7 @@ func (c Candidates) Count() int {
 func (c Candidates) String() string {
 	vals := make([]string, 0, c.Count())
 
-	for value := range c.Values() {
+	for value := range c.Each() {
 		vals = append(vals, string(value.char()))
 	}
 

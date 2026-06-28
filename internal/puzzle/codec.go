@@ -7,18 +7,18 @@ import (
 )
 
 func Parse(input string) (Grid, error) {
-	cellCount := len(input)
+	cellCount := uint(len(input))
 
 	layout, err := NewLayoutFromCellCount(cellCount)
 	if err != nil {
 		return Grid{}, fmt.Errorf("parse: %w", err)
 	}
 
-	minCellValue, maxCellValue := uint8(1), layout.GridSize()
+	minCellValue, maxCellValue := uint8(1), uint8(layout.GridSize())
 	cells := make([]Cell, cellCount)
 	for i := range cellCount {
 		char := input[i]
-		position := NewPosition(uint8(i)/layout.GridSize(), uint8(i)%layout.GridSize())
+		position := NewPosition(i/layout.GridSize(), i%layout.GridSize())
 
 		var candidates Candidates
 		value, isOk := toUint8(char)
@@ -52,10 +52,10 @@ func (g Grid) Render() string {
 
 	row := make([]string, 0, g.layout.GridSize()*3)
 	for cell := range g.Cells() {
-		if cell.position.col == 0 && cell.position.row%g.layout.BlockRowCount() == 0 {
+		if cell.Position().Col() == 0 && g.layout.IsFirstRowInBlock(cell.Position()) {
 			rowsAsString = append(rowsAsString, g.rowSeparator())
 		}
-		if cell.position.col%g.layout.BlockColCount() == 0 {
+		if g.layout.IsFirstColumnInBlock(cell.Position()) {
 			row = append(row, "|")
 		}
 		row = append(row, toString(cell.Candidates()))

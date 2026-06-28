@@ -47,8 +47,7 @@ func (g Grid) With(position Position, newCandidates Candidates) Grid {
 
 // Alter the cell in place. Noop if the position is out of range.
 func (g *Grid) Set(position Position, newCandidates Candidates) {
-	if position.Row() >= g.layout.GridSize() ||
-		position.Col() >= g.layout.GridSize() {
+	if !g.layout.IsOnGrid(position) {
 		return
 	}
 	index := g.getRowMajorIndex(position)

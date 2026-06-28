@@ -90,7 +90,7 @@ func TestGridRender(t *testing.T) {
 				{4, 3, 2, 1},
 				{2, 1, 4, 0},
 			},
-			layout: puzzle.NewLayout(2, 2),
+			layout: Must(puzzle.NewLayoutFromCellCount(16)),
 			expected: ("+-----+-----+\n" +
 				"| 1 2 | 3 4 |\n" +
 				"| 3 4 | 1 2 |\n" +
@@ -110,7 +110,7 @@ func TestGridRender(t *testing.T) {
 				{3, 1, 2, 6, 4, 5},
 				{6, 4, 5, 3, 1, 2},
 			},
-			layout: puzzle.NewLayout(2, 3),
+			layout: Must(puzzle.NewLayoutFromCellCount(36)),
 			expected: ("+-------+-------+\n" +
 				"| . 2 3 | 4 5 6 |\n" +
 				"| 4 5 6 | 1 2 3 |\n" +
@@ -134,4 +134,11 @@ func TestGridRender(t *testing.T) {
 			},
 		)
 	}
+}
+
+func Must[T any](val T, err error) T {
+	if err != nil {
+		panic(err)
+	}
+	return val
 }
