@@ -1,6 +1,7 @@
 package puzzle_test
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -37,9 +38,11 @@ func TestNewLayoutFromCellCount(t *testing.T) {
 					return
 				}
 
+				peers := slices.Collect(layout.PeersOf(puzzle.NewPosition(0, 0)))
+
 				require.NoError(t2, err)
 				assert.Equal(t2, testCase.expectedGridSize, layout.GridSize())
-				assert.Equal(t2, testCase.expectedPeerCount, layout.PeerCount())
+				assert.Equal(t2, testCase.expectedPeerCount, len(peers))
 			},
 		)
 	}

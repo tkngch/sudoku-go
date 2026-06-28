@@ -8,6 +8,56 @@ import (
 	"github.com/tkngch/sudoku-go/internal/puzzle"
 )
 
+func TestNewGrid(t *testing.T) {
+	testCases := []struct {
+		name          string
+		cells         []puzzle.Cell
+		layout        puzzle.Layout
+		expectedError error
+	}{
+		{
+			name:          "not enough cells for the layout",
+			cells:         []puzzle.Cell{},
+			layout:        Must(puzzle.NewLayoutFromCellCount(16)),
+			expectedError: puzzle.ErrInvalidCells,
+		},
+		{
+			name: "cells are incorrectly ordered",
+			cells: []puzzle.Cell{
+				puzzle.NewCell(puzzle.NewPosition(0, 0), puzzle.NewCandidates(4)),
+				puzzle.NewCell(puzzle.NewPosition(0, 1), puzzle.NewCandidates(4)),
+				puzzle.NewCell(puzzle.NewPosition(0, 2), puzzle.NewCandidates(4)),
+				puzzle.NewCell(puzzle.NewPosition(0, 3), puzzle.NewCandidates(4)),
+				puzzle.NewCell(puzzle.NewPosition(1, 0), puzzle.NewCandidates(4)),
+				puzzle.NewCell(puzzle.NewPosition(1, 1), puzzle.NewCandidates(4)),
+				puzzle.NewCell(puzzle.NewPosition(1, 2), puzzle.NewCandidates(4)),
+				puzzle.NewCell(puzzle.NewPosition(1, 3), puzzle.NewCandidates(4)),
+				puzzle.NewCell(puzzle.NewPosition(2, 0), puzzle.NewCandidates(4)),
+				puzzle.NewCell(puzzle.NewPosition(2, 1), puzzle.NewCandidates(4)),
+				puzzle.NewCell(puzzle.NewPosition(2, 2), puzzle.NewCandidates(4)),
+				puzzle.NewCell(puzzle.NewPosition(2, 3), puzzle.NewCandidates(4)),
+				puzzle.NewCell(puzzle.NewPosition(3, 0), puzzle.NewCandidates(4)),
+				puzzle.NewCell(puzzle.NewPosition(3, 1), puzzle.NewCandidates(4)),
+				// The last two cells are not row-major ordered.
+				puzzle.NewCell(puzzle.NewPosition(3, 3), puzzle.NewCandidates(4)),
+				puzzle.NewCell(puzzle.NewPosition(3, 2), puzzle.NewCandidates(4)),
+			},
+			layout:        Must(puzzle.NewLayoutFromCellCount(16)),
+			expectedError: puzzle.ErrInvalidCells,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(
+			testCase.name,
+			func(t2 *testing.T) {
+				_, err := puzzle.NewGrid(testCase.cells, testCase.layout)
+				assert.ErrorIs(t2, err, testCase.expectedError)
+			},
+		)
+	}
+}
+
 func TestGridSet(t *testing.T) {
 	t.Run(
 		"cell is updated in place",
@@ -137,6 +187,12 @@ func TestGridPeersOf(t *testing.T) {
 				puzzle.NewPosition(0, 2), puzzle.NewPosition(1, 2), puzzle.NewPosition(3, 2), puzzle.NewPosition(4, 2), puzzle.NewPosition(5, 2), // column
 				puzzle.NewPosition(3, 0), puzzle.NewPosition(3, 1), // block
 			},
+		},
+		{
+			name:     "4x4 outside the grid",
+			layout:   Must(puzzle.NewLayoutFromCellCount(16)),
+			pos:      puzzle.NewPosition(0, 4),
+			expected: []puzzle.Position{},
 		},
 	}
 

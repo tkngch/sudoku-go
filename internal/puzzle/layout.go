@@ -5,33 +5,36 @@ import (
 	"fmt"
 	"iter"
 	"slices"
-	"sync"
 )
 
 type Layout struct {
 	blockRowCount, blockColCount int
+	peers                        [][]Position
 }
 
 var ErrInvalidCellCount = errors.New("invalid cell count")
 
-// Hold peer positions per layout
-var cachedPeers sync.Map
-
 func NewLayoutFromCellCount(cellCount int) (Layout, error) {
 	switch cellCount {
 	case 144:
-		return Layout{blockRowCount: 4, blockColCount: 3}, nil
+		return newLayout(4, 3), nil
 	case 81:
-		return Layout{blockRowCount: 3, blockColCount: 3}, nil
+		return newLayout(3, 3), nil
 	case 36:
-		return Layout{blockRowCount: 2, blockColCount: 3}, nil
+		return newLayout(2, 3), nil
 	case 16:
-		return Layout{blockRowCount: 2, blockColCount: 2}, nil
+		return newLayout(2, 2), nil
 
 	default:
 		err := fmt.Errorf("new layout from cell count [%d]: %w", cellCount, ErrInvalidCellCount)
 		return Layout{}, err
 	}
+}
+
+func newLayout(r, c int) Layout {
+	l := Layout{blockRowCount: r, blockColCount: c}
+	l.peers = l.allPeers()
+	return l
 }
 
 func (l Layout) BlockColCount() int { return l.blockColCount }
@@ -42,32 +45,21 @@ func (l Layout) GridSize() int { return l.blockRowCount * l.blockColCount }
 
 func (l Layout) CellCount() int { return l.GridSize() * l.GridSize() }
 
-func (l Layout) PeerCount() int {
-	blockPeerCount := l.blockRowCount*l.blockColCount - 1
-	rowPeerCount := l.GridSize() - l.blockColCount
-	colPeerCount := l.GridSize() - l.blockRowCount
-	return blockPeerCount + rowPeerCount + colPeerCount
-}
-
 func (l Layout) PeersOf(position Position) iter.Seq[Position] {
 	if !l.IsOnGrid(position) {
 		return func(yield func(Position) bool) {}
 	}
-
-	cached, isCached := cachedPeers.Load(l)
-	if !isCached {
-		cached, _ = cachedPeers.LoadOrStore(l, l.allPeers())
-	}
-	peers := cached.([][]Position)
-
 	// return an iterator, to prevent the caller from altering the peers.
-	return slices.Values(peers[l.RowMajorIndex(position)])
+	return slices.Values(l.peers[l.RowMajorIndex(position)])
 }
 
 func (l Layout) allPeers() [][]Position {
-	peers := make([][]Position, l.CellCount())
-	peerCount := l.PeerCount()
+	blockPeerCount := l.blockRowCount*l.blockColCount - 1
+	rowPeerCount := l.GridSize() - l.blockColCount
+	colPeerCount := l.GridSize() - l.blockRowCount
+	peerCount := blockPeerCount + rowPeerCount + colPeerCount
 
+	peers := make([][]Position, l.CellCount())
 	for this := range l.allPositions() {
 		thisPeers := make([]Position, 0, peerCount)
 

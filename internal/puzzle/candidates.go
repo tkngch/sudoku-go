@@ -18,9 +18,9 @@ type Candidates uint16
 const maxCandidateValue = 16
 
 func NewCandidates(valueCount uint8) Candidates {
-	d := Candidates(0)
+	var d Candidates
 	for value := uint8(1); value <= valueCount; value++ {
-		d = d | NewCandidate(value)
+		d |= NewCandidate(value)
 	}
 	return d
 }

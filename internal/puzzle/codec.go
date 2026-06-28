@@ -42,11 +42,13 @@ func Parse(input string) (Grid, error) {
 // Compact representation of grid.
 func (g Grid) String() string {
 	cells := slices.Collect(g.Cells())
-	chars := make([]string, len(cells))
-	for i, cell := range cells {
-		chars[i] = toValue(cell.Candidates())
+
+	var b strings.Builder
+	b.Grow(len(cells))
+	for _, cell := range cells {
+		b.WriteString(toValue(cell.Candidates()))
 	}
-	return strings.Join(chars, "")
+	return b.String()
 }
 
 // Multiline, pretty printing of Grid.

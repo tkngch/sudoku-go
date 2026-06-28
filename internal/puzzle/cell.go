@@ -1,8 +1,6 @@
 package puzzle
 
-import (
-	"fmt"
-)
+import "fmt"
 
 type Cell struct {
 	position   Position
