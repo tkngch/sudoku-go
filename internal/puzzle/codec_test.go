@@ -133,6 +133,12 @@ func TestGridRender(t *testing.T) {
 				"+-------+-------+\n" +
 				"6-by-6 grid with 6 2-by-3 blocks"),
 		},
+		{
+			name:     "empty grid",
+			grid:     [][]uint8{},
+			layout:   puzzle.Layout{},
+			expected: "",
+		},
 	}
 
 	for _, testCase := range testCases {

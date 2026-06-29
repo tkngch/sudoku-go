@@ -9,20 +9,20 @@ import (
 
 // Grid is a square sudoku grid of cells in row-major order.
 //
-// Grid's cells are stored in a slice, so copying a Grid (by assignment,
-// function argument, or return value) produces a shallow copy that shares the
-// same underlying cells. Mutating such a copy with Set mutates every other
-// copy. Use Clone for an independent copy, or With for a copy-on-write update.
+// Grid's cell-candidates are stored in a slice, so copying a Grid (by
+// assignment, function argument, or return value) produces a shallow copy that
+// shares the same underlying cells. Mutating such a copy with Set mutates every
+// other copy. Use Clone for an independent copy, or With for a copy-on-write
+// update.
 type Grid struct {
-	cells  []Candidates
+	cellCandidates  []Candidates
 	layout Layout
 }
 
 var ErrInvalidCells = errors.New("invalid cells")
 
 // NewGrid returns a Grid holding cells laid out by layout. It returns
-// ErrInvalidCells when len(cells) != layout.CellCount() or the cells are not in
-// row-major order.
+// ErrInvalidCells when len(cells) != layout.CellCount().
 func NewGrid(cells []Candidates, layout Layout) (Grid, error) {
 	if len(cells) != layout.CellCount() {
 		err := fmt.Errorf(
@@ -32,7 +32,7 @@ func NewGrid(cells []Candidates, layout Layout) (Grid, error) {
 		return Grid{}, err
 	}
 
-	return Grid{cells: cells, layout: layout}, nil
+	return Grid{cellCandidates: slices.Clone(cells), layout: layout}, nil
 }
 
 // PeersOf returns an iterator over the cells that share a row, column, or block
@@ -40,7 +40,7 @@ func NewGrid(cells []Candidates, layout Layout) (Grid, error) {
 func (g Grid) PeersOf(position Position) iter.Seq[Cell] {
 	return func(yield func(Cell) bool) {
 		for peerPosition := range g.layout.PeersOf(position) {
-			peer := g.cells[g.layout.RowMajorIndex(peerPosition)]
+			peer := g.cellCandidates[g.layout.RowMajorIndex(peerPosition)]
 			if !yield(NewCell(peerPosition, peer)) {
 				return
 			}
@@ -48,19 +48,21 @@ func (g Grid) PeersOf(position Position) iter.Seq[Cell] {
 	}
 }
 
-func (g Grid) Cells() []Cell {
-	cells := make([]Cell, len(g.cells))
-	for i, candidates := range g.cells {
-		position := NewPosition(i/g.layout.GridSize(), i%g.layout.GridSize())
-		cells[i] = NewCell(position, candidates)
+func (g Grid) Cells() iter.Seq[Cell] {
+	return func(yield func(Cell) bool) {
+		for i, candidates := range g.cellCandidates {
+			position := NewPosition(i/g.layout.GridSize(), i%g.layout.GridSize())
+			if !yield(NewCell(position, candidates)) {
+				return
+			}
+		}
 	}
-	return cells
 }
 
 // Clone returns an independent copy of the grid whose cells can be mutated with
 // Set without affecting the original.
 func (g Grid) Clone() Grid {
-	g.cells = slices.Clone(g.cells)
+	g.cellCandidates = slices.Clone(g.cellCandidates)
 	return g
 }
 
@@ -83,5 +85,5 @@ func (g *Grid) Set(position Position, newCandidates Candidates) {
 		return
 	}
 	index := g.layout.RowMajorIndex(position)
-	g.cells[index] = newCandidates
+	g.cellCandidates[index] = newCandidates
 }

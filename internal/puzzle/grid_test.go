@@ -46,7 +46,7 @@ func TestGridSet(t *testing.T) {
 			newCandidate := puzzle.NewSingleCandidate(9)
 			grid.Set(puzzle.NewPosition(1, 0), newCandidate)
 
-			cells := grid.Cells()
+			cells := slices.Collect(grid.Cells())
 			assert.Equal(t, newCandidate, cells[4].Candidates(), "cell is updated in place")
 			// Every other cell is untouched.
 			assert.Equal(t, puzzle.NewSingleCandidate(1), cells[0].Candidates())
@@ -85,8 +85,8 @@ func TestGridWith(t *testing.T) {
 		func(t *testing.T) {
 			modified := original.With(puzzle.NewPosition(0, 0), puzzle.NewSingleCandidate(9))
 
-			originalCells := original.Cells()
-			modifiedCells := modified.Cells()
+			originalCells := slices.Collect(original.Cells())
+			modifiedCells := slices.Collect(modified.Cells())
 			// The returned grid holds the new value.
 			assert.Equal(t, puzzle.NewSingleCandidate(9), modifiedCells[0].Candidates())
 			// The original is left untouched at the changed position.
@@ -118,8 +118,8 @@ func TestGridClone(t *testing.T) {
 
 		clone.Set(puzzle.NewPosition(0, 0), puzzle.NewSingleCandidate(2))
 
-		originalCells := original.Cells()
-		cloneCells := clone.Cells()
+		originalCells := slices.Collect(original.Cells())
+		cloneCells := slices.Collect(clone.Cells())
 		assert.Equal(t, puzzle.NewSingleCandidate(1), originalCells[0].Candidates())
 		assert.Equal(t, puzzle.NewSingleCandidate(2), cloneCells[0].Candidates())
 	})
@@ -130,8 +130,8 @@ func TestGridClone(t *testing.T) {
 
 		original.Set(puzzle.NewPosition(0, 0), puzzle.NewSingleCandidate(2))
 
-		originalCells := original.Cells()
-		cloneCells := clone.Cells()
+		originalCells := slices.Collect(original.Cells())
+		cloneCells := slices.Collect(clone.Cells())
 		assert.Equal(t, puzzle.NewSingleCandidate(2), originalCells[0].Candidates())
 		assert.Equal(t, puzzle.NewSingleCandidate(1), cloneCells[0].Candidates())
 	})

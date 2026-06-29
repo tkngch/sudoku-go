@@ -3,6 +3,7 @@ package puzzle
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 )
 
@@ -26,10 +27,10 @@ func Parse(input string) (Grid, error) {
 	for i := range cellCount {
 		char := input[i]
 
-		value, isOk := toUint8(char)
-		if isOk && value >= minCellValue && value <= maxCellValue {
+		value, ok := toUint8(char)
+		if ok && value >= minCellValue && value <= maxCellValue {
 			cells[i] = NewSingleCandidate(value)
-		} else if isOk && value == 0 {
+		} else if ok && value == 0 {
 			cells[i] = NewCandidatesForRange(maxCellValue)
 		} else {
 			return Grid{}, fmt.Errorf("parse %q: %w", char, ErrInvalidCharacter)
@@ -45,7 +46,7 @@ func Parse(input string) (Grid, error) {
 // preserves only cells with single candidates and is not a serialization of
 // unsolved puzzle.
 func (g Grid) String() string {
-	cells := g.Cells()
+	cells := slices.Collect(g.Cells())
 
 	var b strings.Builder
 	b.Grow(len(cells))
@@ -57,10 +58,14 @@ func (g Grid) String() string {
 
 // Multiline, pretty printing of Grid.
 func (g Grid) Render() string {
+	if len(g.cellCandidates) == 0 {
+		return ""
+	}
+
 	rowsAsString := make([]string, 0, g.layout.GridSize())
 
 	row := make([]string, 0, g.layout.GridSize()*3)
-	for _, cell := range g.Cells() {
+	for cell := range g.Cells() {
 		if cell.Position().Col() == 0 && g.layout.IsFirstRowInBlock(cell.Position()) {
 			rowsAsString = append(rowsAsString, g.rowSeparator())
 		}
