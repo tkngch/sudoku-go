@@ -1,5 +1,16 @@
 name: Build & Test
-on: [push]
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   checks:
@@ -9,8 +20,15 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-go@v6
         with:
-          go-version: '1.26.4'
-      - run: gofmt -l .
+          go-version-file: go.mod
+      - name: Check formatting
+        run: |
+          files=$(gofmt -l .)
+          if [ -n "$files" ]; then
+            echo "These files are not gofmt-formatted:"
+            echo "$files"
+            exit 1
+          fi
       - run: go vet ./...
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v9
