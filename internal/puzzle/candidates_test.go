@@ -9,7 +9,7 @@ import (
 	"github.com/tkngch/sudoku-go/internal/puzzle"
 )
 
-func TestNewCandidate(t *testing.T) {
+func TestNewSingleCandidate(t *testing.T) {
 	testCases := []struct {
 		input    uint8
 		expected puzzle.Candidates
@@ -36,15 +36,15 @@ func TestNewCandidate(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(
-			fmt.Sprintf("NewCandidate(%d)", testCase.input),
+			fmt.Sprintf("NewSingleCandidate(%d)", testCase.input),
 			func(t *testing.T) {
-				assert.Equal(t, testCase.expected, puzzle.NewCandidate(testCase.input))
+				assert.Equal(t, testCase.expected, puzzle.NewSingleCandidate(testCase.input))
 			},
 		)
 	}
 }
 
-func TestNewCandidates(t *testing.T) {
+func TestNewCandidatesForRange(t *testing.T) {
 	testCases := []struct {
 		input    uint8
 		expected puzzle.Candidates
@@ -71,9 +71,9 @@ func TestNewCandidates(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(
-			fmt.Sprintf("NewCandidates(%d)", testCase.input),
+			fmt.Sprintf("NewCandidatesForRange(%d)", testCase.input),
 			func(t *testing.T) {
-				assert.Equal(t, testCase.expected, puzzle.NewCandidates(testCase.input))
+				assert.Equal(t, testCase.expected, puzzle.NewCandidatesForRange(testCase.input))
 			},
 		)
 	}

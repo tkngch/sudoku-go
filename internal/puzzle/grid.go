@@ -85,5 +85,5 @@ func (g *Grid) Set(position Position, newCandidates Candidates) {
 		return
 	}
 	index := g.layout.RowMajorIndex(position)
-	g.cells[index] = g.cells[index].Replace(newCandidates)
+	g.cells[index] = g.cells[index].With(newCandidates)
 }

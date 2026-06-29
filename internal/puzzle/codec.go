@@ -26,9 +26,9 @@ func Parse(input string) (Grid, error) {
 		var candidates Candidates
 		value, isOk := toUint8(char)
 		if isOk && value >= minCellValue && value <= maxCellValue {
-			candidates = NewCandidate(value)
+			candidates = NewSingleCandidate(value)
 		} else if isOk && value == 0 {
-			candidates = NewCandidates(maxCellValue)
+			candidates = NewCandidatesForRange(maxCellValue)
 		} else {
 			return Grid{}, fmt.Errorf("parse %q: %w", char, ErrInvalidCharacter)
 		}

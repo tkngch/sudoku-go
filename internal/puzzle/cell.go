@@ -19,7 +19,7 @@ func (c Cell) Candidates() Candidates {
 	return c.candidates
 }
 
-func (c Cell) Replace(newCandidates Candidates) Cell {
+func (c Cell) With(newCandidates Candidates) Cell {
 	return Cell{position: c.position, candidates: newCandidates}
 }
 

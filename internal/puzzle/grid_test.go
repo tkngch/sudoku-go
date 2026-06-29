@@ -24,23 +24,23 @@ func TestNewGrid(t *testing.T) {
 		{
 			name: "cells are incorrectly ordered",
 			cells: []puzzle.Cell{
-				puzzle.NewCell(puzzle.NewPosition(0, 0), puzzle.NewCandidates(4)),
-				puzzle.NewCell(puzzle.NewPosition(0, 1), puzzle.NewCandidates(4)),
-				puzzle.NewCell(puzzle.NewPosition(0, 2), puzzle.NewCandidates(4)),
-				puzzle.NewCell(puzzle.NewPosition(0, 3), puzzle.NewCandidates(4)),
-				puzzle.NewCell(puzzle.NewPosition(1, 0), puzzle.NewCandidates(4)),
-				puzzle.NewCell(puzzle.NewPosition(1, 1), puzzle.NewCandidates(4)),
-				puzzle.NewCell(puzzle.NewPosition(1, 2), puzzle.NewCandidates(4)),
-				puzzle.NewCell(puzzle.NewPosition(1, 3), puzzle.NewCandidates(4)),
-				puzzle.NewCell(puzzle.NewPosition(2, 0), puzzle.NewCandidates(4)),
-				puzzle.NewCell(puzzle.NewPosition(2, 1), puzzle.NewCandidates(4)),
-				puzzle.NewCell(puzzle.NewPosition(2, 2), puzzle.NewCandidates(4)),
-				puzzle.NewCell(puzzle.NewPosition(2, 3), puzzle.NewCandidates(4)),
-				puzzle.NewCell(puzzle.NewPosition(3, 0), puzzle.NewCandidates(4)),
-				puzzle.NewCell(puzzle.NewPosition(3, 1), puzzle.NewCandidates(4)),
+				puzzle.NewCell(puzzle.NewPosition(0, 0), puzzle.NewCandidatesForRange(4)),
+				puzzle.NewCell(puzzle.NewPosition(0, 1), puzzle.NewCandidatesForRange(4)),
+				puzzle.NewCell(puzzle.NewPosition(0, 2), puzzle.NewCandidatesForRange(4)),
+				puzzle.NewCell(puzzle.NewPosition(0, 3), puzzle.NewCandidatesForRange(4)),
+				puzzle.NewCell(puzzle.NewPosition(1, 0), puzzle.NewCandidatesForRange(4)),
+				puzzle.NewCell(puzzle.NewPosition(1, 1), puzzle.NewCandidatesForRange(4)),
+				puzzle.NewCell(puzzle.NewPosition(1, 2), puzzle.NewCandidatesForRange(4)),
+				puzzle.NewCell(puzzle.NewPosition(1, 3), puzzle.NewCandidatesForRange(4)),
+				puzzle.NewCell(puzzle.NewPosition(2, 0), puzzle.NewCandidatesForRange(4)),
+				puzzle.NewCell(puzzle.NewPosition(2, 1), puzzle.NewCandidatesForRange(4)),
+				puzzle.NewCell(puzzle.NewPosition(2, 2), puzzle.NewCandidatesForRange(4)),
+				puzzle.NewCell(puzzle.NewPosition(2, 3), puzzle.NewCandidatesForRange(4)),
+				puzzle.NewCell(puzzle.NewPosition(3, 0), puzzle.NewCandidatesForRange(4)),
+				puzzle.NewCell(puzzle.NewPosition(3, 1), puzzle.NewCandidatesForRange(4)),
 				// The last two cells are not row-major ordered.
-				puzzle.NewCell(puzzle.NewPosition(3, 3), puzzle.NewCandidates(4)),
-				puzzle.NewCell(puzzle.NewPosition(3, 2), puzzle.NewCandidates(4)),
+				puzzle.NewCell(puzzle.NewPosition(3, 3), puzzle.NewCandidatesForRange(4)),
+				puzzle.NewCell(puzzle.NewPosition(3, 2), puzzle.NewCandidatesForRange(4)),
 			},
 			layout:        Must(puzzle.NewLayoutFromCellCount(16)),
 			expectedError: puzzle.ErrInvalidCells,
@@ -67,18 +67,18 @@ func TestGridSet(t *testing.T) {
 				Must(puzzle.NewLayoutFromCellCount(16)),
 			)
 
-			newCandidate := puzzle.NewCandidate(9)
+			newCandidate := puzzle.NewSingleCandidate(9)
 			grid.Set(puzzle.NewPosition(1, 0), newCandidate)
 
 			cells := slices.Collect(grid.Cells())
 			assert.Equal(t, newCandidate, cells[4].Candidates(), "cell is updated in place")
 			// Every other cell is untouched.
-			assert.Equal(t, puzzle.NewCandidate(1), cells[0].Candidates())
-			assert.Equal(t, puzzle.NewCandidate(2), cells[1].Candidates())
-			assert.Equal(t, puzzle.NewCandidate(3), cells[2].Candidates())
-			assert.Equal(t, puzzle.NewCandidate(4), cells[3].Candidates())
+			assert.Equal(t, puzzle.NewSingleCandidate(1), cells[0].Candidates())
+			assert.Equal(t, puzzle.NewSingleCandidate(2), cells[1].Candidates())
+			assert.Equal(t, puzzle.NewSingleCandidate(3), cells[2].Candidates())
+			assert.Equal(t, puzzle.NewSingleCandidate(4), cells[3].Candidates())
 			for i := uint8(5); i < 16; i++ {
-				assert.Equalf(t, puzzle.NewCandidate(i%4+1), cells[i].Candidates(), "cell %d", i)
+				assert.Equalf(t, puzzle.NewSingleCandidate(i%4+1), cells[i].Candidates(), "cell %d", i)
 			}
 		},
 	)
@@ -92,7 +92,7 @@ func TestGridSet(t *testing.T) {
 			)
 
 			assert.NotPanics(t, func() {
-				grid.Set(puzzle.NewPosition(0, 2), puzzle.NewCandidate(9))
+				grid.Set(puzzle.NewPosition(0, 2), puzzle.NewSingleCandidate(9))
 			})
 		},
 	)
@@ -107,14 +107,14 @@ func TestGridWith(t *testing.T) {
 	t.Run(
 		"cell is updated after copy",
 		func(t *testing.T) {
-			modified := original.With(puzzle.NewPosition(0, 0), puzzle.NewCandidate(9))
+			modified := original.With(puzzle.NewPosition(0, 0), puzzle.NewSingleCandidate(9))
 
 			originalCells := slices.Collect(original.Cells())
 			modifiedCells := slices.Collect(modified.Cells())
 			// The returned grid holds the new value.
-			assert.Equal(t, puzzle.NewCandidate(9), modifiedCells[0].Candidates())
+			assert.Equal(t, puzzle.NewSingleCandidate(9), modifiedCells[0].Candidates())
 			// The original is left untouched at the changed position.
-			assert.Equal(t, puzzle.NewCandidate(1), originalCells[0].Candidates())
+			assert.Equal(t, puzzle.NewSingleCandidate(1), originalCells[0].Candidates())
 			// Every other cell is shared/equal between the two grids.
 			for i := 1; i < 4; i++ {
 				assert.Equal(t, originalCells[i].Candidates(), modifiedCells[i].Candidates())
@@ -125,7 +125,7 @@ func TestGridWith(t *testing.T) {
 	t.Run(
 		"noop when an out-of-bounds position is provided",
 		func(t *testing.T) {
-			modified := original.With(puzzle.NewPosition(0, 4), puzzle.NewCandidate(9))
+			modified := original.With(puzzle.NewPosition(0, 4), puzzle.NewSingleCandidate(9))
 			assert.Equal(t, original, modified)
 		},
 	)
@@ -140,24 +140,24 @@ func TestGridClone(t *testing.T) {
 		original := newGrid(rows, layout)
 		clone := original.Clone()
 
-		clone.Set(puzzle.NewPosition(0, 0), puzzle.NewCandidate(2))
+		clone.Set(puzzle.NewPosition(0, 0), puzzle.NewSingleCandidate(2))
 
 		originalCells := slices.Collect(original.Cells())
 		cloneCells := slices.Collect(clone.Cells())
-		assert.Equal(t, puzzle.NewCandidate(1), originalCells[0].Candidates())
-		assert.Equal(t, puzzle.NewCandidate(2), cloneCells[0].Candidates())
+		assert.Equal(t, puzzle.NewSingleCandidate(1), originalCells[0].Candidates())
+		assert.Equal(t, puzzle.NewSingleCandidate(2), cloneCells[0].Candidates())
 	})
 
 	t.Run("mutating the original leaves the clone unchanged", func(t *testing.T) {
 		original := newGrid(rows, layout)
 		clone := original.Clone()
 
-		original.Set(puzzle.NewPosition(0, 0), puzzle.NewCandidate(2))
+		original.Set(puzzle.NewPosition(0, 0), puzzle.NewSingleCandidate(2))
 
 		originalCells := slices.Collect(original.Cells())
 		cloneCells := slices.Collect(clone.Cells())
-		assert.Equal(t, puzzle.NewCandidate(2), originalCells[0].Candidates())
-		assert.Equal(t, puzzle.NewCandidate(1), cloneCells[0].Candidates())
+		assert.Equal(t, puzzle.NewSingleCandidate(2), originalCells[0].Candidates())
+		assert.Equal(t, puzzle.NewSingleCandidate(1), cloneCells[0].Candidates())
 	})
 }
 
@@ -222,7 +222,7 @@ func newGrid(rows [][]uint8, layout puzzle.Layout) puzzle.Grid {
 	for row, rowValues := range rows {
 		for col, value := range rowValues {
 			position := puzzle.NewPosition(row, col)
-			cells = append(cells, puzzle.NewCell(position, puzzle.NewCandidate(value)))
+			cells = append(cells, puzzle.NewCell(position, puzzle.NewSingleCandidate(value)))
 		}
 	}
 	return Must(puzzle.NewGrid(cells, layout))

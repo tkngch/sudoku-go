@@ -17,18 +17,20 @@ type Candidates uint16
 // Given that Candidates has 16 bit width, the max value it can represent is 16.
 const maxCandidateValue = 16
 
-func NewCandidates(valueCount uint8) Candidates {
+// Make a new candidate that represents the ranged values: from 1 to the
+// provided max-value.
+func NewCandidatesForRange(maxValue uint8) Candidates {
 	var d Candidates
-	for value := uint8(1); value <= valueCount; value++ {
-		d |= NewCandidate(value)
+	for value := uint8(1); value <= maxValue; value++ {
+		d |= NewSingleCandidate(value)
 	}
 	return d
 }
 
 // Make a new candidate that represents the provided value. Only values from 1
-// to 16 are supported. NewCandidate(17), for example, returns an empty
+// to 16 are supported. NewSingleCandidate(17), for example, returns an empty
 // candidates.
-func NewCandidate(value uint8) Candidates {
+func NewSingleCandidate(value uint8) Candidates {
 	if value < 1 || value > maxCandidateValue {
 		return 0
 	}
@@ -49,7 +51,7 @@ func (c Candidates) Remove(other Candidates) Candidates {
 func (c Candidates) All() iter.Seq[Candidates] {
 	return func(yield func(Candidates) bool) {
 		for num := uint8(1); num <= maxCandidateValue; num++ {
-			value := NewCandidate(num)
+			value := NewSingleCandidate(num)
 			if c&value != 0 && !yield(value) {
 				return
 			}
