@@ -95,10 +95,10 @@ func (l Layout) arePeers(a, b Position) bool {
 	if a == b {
 		return false
 	}
-	if a.Row() == b.Row() {
+	if a.row == b.row {
 		return true
 	}
-	if a.Col() == b.Col() {
+	if a.col == b.col {
 		return true
 	}
 	return l.areInSameBlock(a, b)
@@ -106,35 +106,35 @@ func (l Layout) arePeers(a, b Position) bool {
 
 func (l Layout) areInSameBlock(a, b Position) bool {
 	blockA := NewPosition(
-		a.Row()/l.blockRowCount,
-		a.Col()/l.blockColCount,
+		a.row/l.blockRowCount,
+		a.col/l.blockColCount,
 	)
 	blockB := NewPosition(
-		b.Row()/l.blockRowCount,
-		b.Col()/l.blockColCount,
+		b.row/l.blockRowCount,
+		b.col/l.blockColCount,
 	)
 	return blockA == blockB
 }
 
 func (l Layout) IsOnGrid(position Position) bool {
-	return position.Row() >= 0 &&
-		position.Row() < l.GridSize() &&
-		position.Col() >= 0 &&
-		position.Col() < l.GridSize()
+	return position.row >= 0 &&
+		position.row < l.GridSize() &&
+		position.col >= 0 &&
+		position.col < l.GridSize()
 }
 
 func (l Layout) IsFirstColumnInBlock(position Position) bool {
-	return position.Col() == 0 ||
-		!l.areInSameBlock(position, NewPosition(position.Row(), position.Col()-1))
+	return position.col == 0 ||
+		!l.areInSameBlock(position, NewPosition(position.row, position.col-1))
 }
 
 func (l Layout) IsFirstRowInBlock(position Position) bool {
-	return position.Row() == 0 ||
-		!l.areInSameBlock(position, NewPosition(position.Row()-1, position.Col()))
+	return position.row == 0 ||
+		!l.areInSameBlock(position, NewPosition(position.row-1, position.col))
 }
 
 func (l Layout) RowMajorIndex(position Position) int {
-	return position.Row()*l.GridSize() + position.Col()
+	return position.row*l.GridSize() + position.col
 }
 
 func (l Layout) String() string {

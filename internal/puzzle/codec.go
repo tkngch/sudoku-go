@@ -66,7 +66,7 @@ func (g Grid) Render() string {
 
 	row := make([]string, 0, g.layout.GridSize()*3)
 	for cell := range g.Cells() {
-		if cell.Position().Col() == 0 && g.layout.IsFirstRowInBlock(cell.Position()) {
+		if cell.Position().col == 0 && g.layout.IsFirstRowInBlock(cell.Position()) {
 			rowsAsString = append(rowsAsString, g.rowSeparator())
 		}
 		if g.layout.IsFirstColumnInBlock(cell.Position()) {
@@ -74,7 +74,7 @@ func (g Grid) Render() string {
 		}
 		row = append(row, toValue(cell.Candidates()))
 
-		if cell.Position().Col() == g.layout.GridSize()-1 {
+		if cell.Position().col == g.layout.GridSize()-1 {
 			row = append(row, "|")
 			rowsAsString = append(rowsAsString, strings.Join(row, " "))
 			row = row[:0]

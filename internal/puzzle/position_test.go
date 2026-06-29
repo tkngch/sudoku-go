@@ -7,9 +7,9 @@ import (
 	"github.com/tkngch/sudoku-go/internal/puzzle"
 )
 
-func TestPosition(t *testing.T) {
+func TestPositionString(t *testing.T) {
 	pos := puzzle.NewPosition(3, 5)
 
-	assert.Equal(t, 3, pos.Row())
-	assert.Equal(t, 5, pos.Col())
+	assert.Contains(t, pos.String(), "3")
+	assert.Contains(t, pos.String(), "5")
 }

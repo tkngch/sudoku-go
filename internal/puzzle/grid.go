@@ -15,8 +15,8 @@ import (
 // other copy. Use Clone for an independent copy, or With for a copy-on-write
 // update.
 type Grid struct {
-	cellCandidates  []Candidates
-	layout Layout
+	cellCandidates []Candidates
+	layout         Layout
 }
 
 var ErrInvalidCells = errors.New("invalid cells")
