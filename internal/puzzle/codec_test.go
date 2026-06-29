@@ -51,12 +51,12 @@ func TestParse(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(
 			testCase.name,
-			func(t2 *testing.T) {
+			func(t *testing.T) {
 				grid, err := puzzle.Parse(testCase.input)
 				if testCase.expectedError != nil {
-					require.ErrorIs(t2, err, testCase.expectedError)
+					require.ErrorIs(t, err, testCase.expectedError)
 				}
-				assert.Equal(t2, testCase.expected, grid)
+				assert.Equal(t, testCase.expected, grid)
 			},
 		)
 	}
@@ -76,10 +76,10 @@ func TestParseStringRoundTrip(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(
 			testCase.name,
-			func(t2 *testing.T) {
+			func(t *testing.T) {
 				grid, err := puzzle.Parse(testCase.input)
-				require.NoError(t2, err)
-				assert.Equal(t2, testCase.input, grid.String())
+				require.NoError(t, err)
+				assert.Equal(t, testCase.input, grid.String())
 			},
 		)
 	}
@@ -138,9 +138,9 @@ func TestGridRender(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(
 			testCase.name,
-			func(t2 *testing.T) {
+			func(t *testing.T) {
 				grid := newGrid(testCase.grid, testCase.layout)
-				assert.Equal(t2, testCase.expected, grid.Render())
+				assert.Equal(t, testCase.expected, grid.Render())
 			},
 		)
 	}

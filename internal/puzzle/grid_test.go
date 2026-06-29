@@ -50,9 +50,9 @@ func TestNewGrid(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(
 			testCase.name,
-			func(t2 *testing.T) {
+			func(t *testing.T) {
 				_, err := puzzle.NewGrid(testCase.cells, testCase.layout)
-				assert.ErrorIs(t2, err, testCase.expectedError)
+				assert.ErrorIs(t, err, testCase.expectedError)
 			},
 		)
 	}
@@ -61,7 +61,7 @@ func TestNewGrid(t *testing.T) {
 func TestGridSet(t *testing.T) {
 	t.Run(
 		"cell is updated in place",
-		func(t2 *testing.T) {
+		func(t *testing.T) {
 			grid := newGrid(
 				slices.Repeat([][]uint8{{1, 2, 3, 4}}, 4),
 				Must(puzzle.NewLayoutFromCellCount(16)),
@@ -71,27 +71,27 @@ func TestGridSet(t *testing.T) {
 			grid.Set(puzzle.NewPosition(1, 0), newCandidate)
 
 			cells := slices.Collect(grid.Cells())
-			assert.Equal(t2, newCandidate, cells[4].Candidates(), "cell is updated in place")
+			assert.Equal(t, newCandidate, cells[4].Candidates(), "cell is updated in place")
 			// Every other cell is untouched.
-			assert.Equal(t2, puzzle.NewCandidate(1), cells[0].Candidates())
-			assert.Equal(t2, puzzle.NewCandidate(2), cells[1].Candidates())
-			assert.Equal(t2, puzzle.NewCandidate(3), cells[2].Candidates())
-			assert.Equal(t2, puzzle.NewCandidate(4), cells[3].Candidates())
+			assert.Equal(t, puzzle.NewCandidate(1), cells[0].Candidates())
+			assert.Equal(t, puzzle.NewCandidate(2), cells[1].Candidates())
+			assert.Equal(t, puzzle.NewCandidate(3), cells[2].Candidates())
+			assert.Equal(t, puzzle.NewCandidate(4), cells[3].Candidates())
 			for i := uint8(5); i < 16; i++ {
-				assert.Equalf(t2, puzzle.NewCandidate(i%4+1), cells[i].Candidates(), "cell %d", i)
+				assert.Equalf(t, puzzle.NewCandidate(i%4+1), cells[i].Candidates(), "cell %d", i)
 			}
 		},
 	)
 
 	t.Run(
 		"does not panic when an out-of-bounds position is provided",
-		func(t2 *testing.T) {
+		func(t *testing.T) {
 			grid := newGrid(
 				slices.Repeat([][]uint8{{1, 2, 3, 4}}, 4),
 				Must(puzzle.NewLayoutFromCellCount(16)),
 			)
 
-			assert.NotPanics(t2, func() {
+			assert.NotPanics(t, func() {
 				grid.Set(puzzle.NewPosition(0, 2), puzzle.NewCandidate(9))
 			})
 		},
@@ -106,27 +106,27 @@ func TestGridWith(t *testing.T) {
 
 	t.Run(
 		"cell is updated after copy",
-		func(t2 *testing.T) {
+		func(t *testing.T) {
 			modified := original.With(puzzle.NewPosition(0, 0), puzzle.NewCandidate(9))
 
 			originalCells := slices.Collect(original.Cells())
 			modifiedCells := slices.Collect(modified.Cells())
 			// The returned grid holds the new value.
-			assert.Equal(t2, puzzle.NewCandidate(9), modifiedCells[0].Candidates())
+			assert.Equal(t, puzzle.NewCandidate(9), modifiedCells[0].Candidates())
 			// The original is left untouched at the changed position.
-			assert.Equal(t2, puzzle.NewCandidate(1), originalCells[0].Candidates())
+			assert.Equal(t, puzzle.NewCandidate(1), originalCells[0].Candidates())
 			// Every other cell is shared/equal between the two grids.
 			for i := 1; i < 4; i++ {
-				assert.Equal(t2, originalCells[i].Candidates(), modifiedCells[i].Candidates())
+				assert.Equal(t, originalCells[i].Candidates(), modifiedCells[i].Candidates())
 			}
 		},
 	)
 
 	t.Run(
 		"noop when an out-of-bounds position is provided",
-		func(t2 *testing.T) {
+		func(t *testing.T) {
 			modified := original.With(puzzle.NewPosition(0, 4), puzzle.NewCandidate(9))
-			assert.Equal(t2, original, modified)
+			assert.Equal(t, original, modified)
 		},
 	)
 
@@ -136,7 +136,7 @@ func TestGridClone(t *testing.T) {
 	rows := slices.Repeat([][]uint8{{1, 2, 3, 4}}, 4)
 	layout := Must(puzzle.NewLayoutFromCellCount(16))
 
-	t.Run("mutating the clone leaves the original unchanged", func(t2 *testing.T) {
+	t.Run("mutating the clone leaves the original unchanged", func(t *testing.T) {
 		original := newGrid(rows, layout)
 		clone := original.Clone()
 
@@ -144,11 +144,11 @@ func TestGridClone(t *testing.T) {
 
 		originalCells := slices.Collect(original.Cells())
 		cloneCells := slices.Collect(clone.Cells())
-		assert.Equal(t2, puzzle.NewCandidate(1), originalCells[0].Candidates())
-		assert.Equal(t2, puzzle.NewCandidate(2), cloneCells[0].Candidates())
+		assert.Equal(t, puzzle.NewCandidate(1), originalCells[0].Candidates())
+		assert.Equal(t, puzzle.NewCandidate(2), cloneCells[0].Candidates())
 	})
 
-	t.Run("mutating the original leaves the clone unchanged", func(t2 *testing.T) {
+	t.Run("mutating the original leaves the clone unchanged", func(t *testing.T) {
 		original := newGrid(rows, layout)
 		clone := original.Clone()
 
@@ -156,8 +156,8 @@ func TestGridClone(t *testing.T) {
 
 		originalCells := slices.Collect(original.Cells())
 		cloneCells := slices.Collect(clone.Cells())
-		assert.Equal(t2, puzzle.NewCandidate(2), originalCells[0].Candidates())
-		assert.Equal(t2, puzzle.NewCandidate(1), cloneCells[0].Candidates())
+		assert.Equal(t, puzzle.NewCandidate(2), originalCells[0].Candidates())
+		assert.Equal(t, puzzle.NewCandidate(1), cloneCells[0].Candidates())
 	})
 }
 
@@ -199,7 +199,7 @@ func TestGridPeersOf(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(
 			testCase.name,
-			func(t2 *testing.T) {
+			func(t *testing.T) {
 				rows := make([][]uint8, testCase.layout.GridSize())
 				for i := range testCase.layout.GridSize() {
 					rows[i] = make([]uint8, testCase.layout.GridSize())
@@ -211,7 +211,7 @@ func TestGridPeersOf(t *testing.T) {
 					positions = append(positions, cell.Position())
 				}
 
-				assert.ElementsMatch(t2, testCase.expected, positions)
+				assert.ElementsMatch(t, testCase.expected, positions)
 			},
 		)
 	}

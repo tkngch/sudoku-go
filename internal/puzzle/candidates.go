@@ -29,6 +29,9 @@ func NewCandidates(valueCount uint8) Candidates {
 // to 16 are supported. NewCandidate(17), for example, returns an empty
 // candidates.
 func NewCandidate(value uint8) Candidates {
+	if value < 1 || value > maxCandidateValue {
+		return 0
+	}
 	return 1 << (value - 1)
 }
 
@@ -77,6 +80,7 @@ func (c Candidates) char() byte {
 		return byte('0' + v)
 	case 10 <= v && v <= 16:
 		return byte('a' + v - 10)
+	default:
+		return '.'
 	}
-	return '.'
 }

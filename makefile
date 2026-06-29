@@ -14,5 +14,4 @@ lint:
 
 .PHONY: test
 test:
-	go clean -testcache
-	go test -timeout 10s ./...
+	go test -cover -race -timeout 30s ./...

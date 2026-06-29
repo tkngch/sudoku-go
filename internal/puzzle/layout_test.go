@@ -28,21 +28,21 @@ func TestNewLayoutFromCellCount(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(
 			testCase.name,
-			func(t2 *testing.T) {
+			func(t *testing.T) {
 				layout, err := puzzle.NewLayoutFromCellCount(testCase.input)
 
 				if testCase.expectedError != nil {
-					require.Error(t2, err)
-					assert.ErrorIs(t2, err, testCase.expectedError)
-					assert.Equal(t2, puzzle.Layout{}, layout)
+					require.Error(t, err)
+					assert.ErrorIs(t, err, testCase.expectedError)
+					assert.Equal(t, puzzle.Layout{}, layout)
 					return
 				}
 
 				peers := slices.Collect(layout.PeersOf(puzzle.NewPosition(0, 0)))
 
-				require.NoError(t2, err)
-				assert.Equal(t2, testCase.expectedGridSize, layout.GridSize())
-				assert.Equal(t2, testCase.expectedPeerCount, len(peers))
+				require.NoError(t, err)
+				assert.Equal(t, testCase.expectedGridSize, layout.GridSize())
+				assert.Equal(t, testCase.expectedPeerCount, len(peers))
 			},
 		)
 	}
@@ -65,8 +65,8 @@ func TestLayoutIsOnGrid(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(
 			testCase.name,
-			func(t2 *testing.T) {
-				assert.Equal(t2, testCase.expected, layout.IsOnGrid(testCase.position))
+			func(t *testing.T) {
+				assert.Equal(t, testCase.expected, layout.IsOnGrid(testCase.position))
 			},
 		)
 	}
@@ -120,9 +120,9 @@ func TestLayoutRowMajorIndex(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(
 			testCase.name,
-			func(t2 *testing.T) {
+			func(t *testing.T) {
 				layout := Must(puzzle.NewLayoutFromCellCount(testCase.cellCount))
-				assert.Equal(t2, testCase.expected, layout.RowMajorIndex(testCase.position))
+				assert.Equal(t, testCase.expected, layout.RowMajorIndex(testCase.position))
 			},
 		)
 	}

@@ -14,7 +14,7 @@ func TestNewCandidate(t *testing.T) {
 		input    uint8
 		expected puzzle.Candidates
 	}{
-		{input: 0, expected: 0b0}, // underflows
+		{input: 0, expected: 0b0},
 		{input: 1, expected: 0b1},
 		{input: 2, expected: 0b10},
 		{input: 3, expected: 0b100},
@@ -31,14 +31,14 @@ func TestNewCandidate(t *testing.T) {
 		{input: 14, expected: 0b10000000000000},
 		{input: 15, expected: 0b100000000000000},
 		{input: 16, expected: 0b1000000000000000},
-		{input: 17, expected: 0b0}, // overflows
+		{input: 17, expected: 0b0},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(
 			fmt.Sprintf("NewCandidate(%d)", testCase.input),
-			func(t2 *testing.T) {
-				assert.Equal(t2, testCase.expected, puzzle.NewCandidate(testCase.input))
+			func(t *testing.T) {
+				assert.Equal(t, testCase.expected, puzzle.NewCandidate(testCase.input))
 			},
 		)
 	}
@@ -66,14 +66,14 @@ func TestNewCandidates(t *testing.T) {
 		{input: 14, expected: 0b11111111111111},
 		{input: 15, expected: 0b111111111111111},
 		{input: 16, expected: 0b1111111111111111},
-		{input: 17, expected: 0b1111111111111111}, // 17th value overflows and is not added
+		{input: 17, expected: 0b1111111111111111}, // 17th value is not added
 	}
 
 	for _, testCase := range testCases {
 		t.Run(
 			fmt.Sprintf("NewCandidates(%d)", testCase.input),
-			func(t2 *testing.T) {
-				assert.Equal(t2, testCase.expected, puzzle.NewCandidates(testCase.input))
+			func(t *testing.T) {
+				assert.Equal(t, testCase.expected, puzzle.NewCandidates(testCase.input))
 			},
 		)
 	}
@@ -109,12 +109,12 @@ func TestCandidatesUnion(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(
 			testCase.name,
-			func(t2 *testing.T) {
+			func(t *testing.T) {
 				value := testCase.initialValue
 				for _, add := range testCase.adders {
 					value = value.Union(add)
 				}
-				assert.Equal(t2, testCase.expected, value)
+				assert.Equal(t, testCase.expected, value)
 			},
 		)
 	}
@@ -144,12 +144,12 @@ func TestCandidatesRemove(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(
 			testCase.name,
-			func(t2 *testing.T) {
+			func(t *testing.T) {
 				value := testCase.initialValue
 				for _, sub := range testCase.substracters {
 					value = value.Remove(sub)
 				}
-				assert.Equal(t2, testCase.expected, value)
+				assert.Equal(t, testCase.expected, value)
 			},
 		)
 	}
@@ -169,9 +169,9 @@ func TestCandidatesAll(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(
 			testCase.name,
-			func(t2 *testing.T) {
+			func(t *testing.T) {
 				actual := slices.Collect(testCase.input.All())
-				assert.Equal(t2, testCase.expected, actual)
+				assert.Equal(t, testCase.expected, actual)
 			},
 		)
 	}
@@ -192,8 +192,8 @@ func TestCandidatesString(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(
 			testCase.name,
-			func(t2 *testing.T) {
-				assert.Equal(t2, testCase.expected, testCase.input.String())
+			func(t *testing.T) {
+				assert.Equal(t, testCase.expected, testCase.input.String())
 			},
 		)
 	}
@@ -213,8 +213,8 @@ func TestCandidatesCount(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(
 			testCase.name,
-			func(t2 *testing.T) {
-				assert.Equal(t2, testCase.expected, testCase.input.Count())
+			func(t *testing.T) {
+				assert.Equal(t, testCase.expected, testCase.input.Count())
 			},
 		)
 	}
