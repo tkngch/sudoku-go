@@ -10,6 +10,8 @@ import (
 )
 
 func TestNewLayoutFromCellCount(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name              string
 		input             int
@@ -29,12 +31,15 @@ func TestNewLayoutFromCellCount(t *testing.T) {
 		t.Run(
 			testCase.name,
 			func(t *testing.T) {
+				t.Parallel()
+
 				layout, err := puzzle.NewLayoutFromCellCount(testCase.input)
 
 				if testCase.expectedError != nil {
 					require.Error(t, err)
-					assert.ErrorIs(t, err, testCase.expectedError)
+					require.ErrorIs(t, err, testCase.expectedError)
 					assert.Equal(t, puzzle.Layout{}, layout)
+
 					return
 				}
 
@@ -42,13 +47,15 @@ func TestNewLayoutFromCellCount(t *testing.T) {
 
 				require.NoError(t, err)
 				assert.Equal(t, testCase.expectedGridSize, layout.GridSize())
-				assert.Equal(t, testCase.expectedPeerCount, len(peers))
+				assert.Len(t, peers, testCase.expectedPeerCount)
 			},
 		)
 	}
 }
 
 func TestLayoutIsOnGrid(t *testing.T) {
+	t.Parallel()
+
 	layout := Must(puzzle.NewLayoutFromCellCount(16)) // 4x4 grid
 	testCases := []struct {
 		name     string
@@ -66,6 +73,8 @@ func TestLayoutIsOnGrid(t *testing.T) {
 		t.Run(
 			testCase.name,
 			func(t *testing.T) {
+				t.Parallel()
+
 				assert.Equal(t, testCase.expected, layout.IsOnGrid(testCase.position))
 			},
 		)
@@ -73,6 +82,8 @@ func TestLayoutIsOnGrid(t *testing.T) {
 }
 
 func TestLayoutRowMajorIndex(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name      string
 		cellCount int
@@ -121,6 +132,8 @@ func TestLayoutRowMajorIndex(t *testing.T) {
 		t.Run(
 			testCase.name,
 			func(t *testing.T) {
+				t.Parallel()
+
 				layout := Must(puzzle.NewLayoutFromCellCount(testCase.cellCount))
 				assert.Equal(t, testCase.expected, layout.RowMajorIndex(testCase.position))
 			},

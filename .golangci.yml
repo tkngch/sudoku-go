@@ -1,0 +1,16 @@
+version: "2"
+linters:
+  default: all
+  disable:
+    - gomodguard  # deprecated
+    - wsl  # deprecated
+    - depguard
+    - dupl
+    - exhaustruct
+    - goconst
+    - ireturn
+    - mnd
+    - revive
+  settings:
+    funlen:
+      lines: 120

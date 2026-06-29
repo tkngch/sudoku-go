@@ -22,25 +22,28 @@ func Parse(input string) (*Grid, error) {
 		return nil, fmt.Errorf("parse: %w", err)
 	}
 
-	minCellValue, maxCellValue := uint8(1), uint8(layout.GridSize())
-	cells := make([]Candidates, cellCount)
-	for i := range cellCount {
-		char := input[i]
+	minCellValue, maxCellValue := 1, layout.GridSize()
 
-		value, ok := toUint8(char)
-		if ok && value >= minCellValue && value <= maxCellValue {
-			cells[i] = NewSingleCandidate(value)
-		} else if ok && value == 0 {
-			cells[i] = NewCandidatesForRange(maxCellValue)
-		} else {
+	cells := make([]Candidates, cellCount)
+	for idx := range cellCount {
+		char := input[idx]
+
+		value, ok := toInt(char)
+		switch {
+		case ok && value >= minCellValue && value <= maxCellValue:
+			cells[idx] = NewSingleCandidate(value)
+		case ok && value == 0:
+			cells[idx] = NewCandidatesForRange(maxCellValue)
+		default:
 			return nil, fmt.Errorf("parse %q: %w", char, ErrInvalidCharacter)
 		}
 	}
+
 	return NewGrid(cells, layout)
 }
 
-// Return the compact, single-line form of the grid: one character per cell in
-// row-major order, inverse to Parse for solved or given cells.
+// String returns the compact, single-line form of the grid: one character per
+// cell in row-major order, inverse to Parse for solved or given cells.
 //
 // It is lossy: a cell with more than one candidate is written as '.', so String
 // preserves only cells with single candidates and is not a serialization of
@@ -48,15 +51,17 @@ func Parse(input string) (*Grid, error) {
 func (g *Grid) String() string {
 	cells := slices.Collect(g.Cells())
 
-	var b strings.Builder
-	b.Grow(len(cells))
+	var builder strings.Builder
+	builder.Grow(len(cells))
+
 	for _, cell := range cells {
-		b.WriteString(toValue(cell.Candidates()))
+		builder.WriteString(toValue(cell.Candidates()))
 	}
-	return b.String()
+
+	return builder.String()
 }
 
-// Multiline, pretty printing of Grid.
+// Render returns multiline, pretty printing of Grid.
 func (g *Grid) Render() string {
 	if len(g.cellCandidates) == 0 {
 		return ""
@@ -69,9 +74,11 @@ func (g *Grid) Render() string {
 		if cell.Position().col == 0 && g.layout.IsFirstRowInBlock(cell.Position()) {
 			rowsAsString = append(rowsAsString, g.rowSeparator())
 		}
+
 		if g.layout.IsFirstColumnInBlock(cell.Position()) {
 			row = append(row, "|")
 		}
+
 		row = append(row, toValue(cell.Candidates()))
 
 		if cell.Position().col == g.layout.GridSize()-1 {
@@ -89,27 +96,30 @@ func (g *Grid) Render() string {
 
 func (g *Grid) rowSeparator() string {
 	blockCount := g.layout.GridSize() / g.layout.blockColCount
+
 	separators := make([]string, blockCount)
 	for i := range blockCount {
 		separators[i] = strings.Repeat("-", g.layout.blockColCount*2+1)
 	}
+
 	return "+" + strings.Join(separators, "+") + "+"
 }
 
-func toUint8(char byte) (uint8, bool) {
+func toInt(char byte) (int, bool) {
 	switch {
 	case char == '0' || char == '.':
 		return 0, true
 
 	case '0' <= char && char <= '9':
-		return uint8(char - '0'), true
+		return int(char - '0'), true
 
 	case 'a' <= char && char <= 'g':
-		return uint8(char-'a') + 10, true
+		return int(char - 'a' + 10), true
 
 	case 'A' <= char && char <= 'G':
-		return uint8(char-'A') + 10, true
+		return int(char - 'A' + 10), true
 	}
+
 	return 0, false
 }
 
@@ -117,5 +127,6 @@ func toValue(x Candidates) string {
 	if x.Count() != 1 {
 		return "."
 	}
+
 	return x.String()
 }

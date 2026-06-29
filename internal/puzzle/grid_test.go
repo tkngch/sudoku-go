@@ -9,6 +9,8 @@ import (
 )
 
 func TestNewGrid(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name          string
 		cells         []puzzle.Candidates
@@ -27,6 +29,8 @@ func TestNewGrid(t *testing.T) {
 		t.Run(
 			testCase.name,
 			func(t *testing.T) {
+				t.Parallel()
+
 				_, err := puzzle.NewGrid(testCase.cells, testCase.layout)
 				assert.ErrorIs(t, err, testCase.expectedError)
 			},
@@ -35,11 +39,15 @@ func TestNewGrid(t *testing.T) {
 }
 
 func TestGridSet(t *testing.T) {
+	t.Parallel()
+
 	t.Run(
 		"cell is updated in place",
 		func(t *testing.T) {
+			t.Parallel()
+
 			grid := newGrid(
-				slices.Repeat([][]uint8{{1, 2, 3, 4}}, 4),
+				slices.Repeat([][]int{{1, 2, 3, 4}}, 4),
 				Must(puzzle.NewLayoutFromCellCount(16)),
 			)
 
@@ -53,7 +61,8 @@ func TestGridSet(t *testing.T) {
 			assert.Equal(t, puzzle.NewSingleCandidate(2), cells[1].Candidates())
 			assert.Equal(t, puzzle.NewSingleCandidate(3), cells[2].Candidates())
 			assert.Equal(t, puzzle.NewSingleCandidate(4), cells[3].Candidates())
-			for i := uint8(5); i < 16; i++ {
+
+			for i := 5; i < 16; i++ {
 				assert.Equalf(t, puzzle.NewSingleCandidate(i%4+1), cells[i].Candidates(), "cell %d", i)
 			}
 		},
@@ -62,8 +71,10 @@ func TestGridSet(t *testing.T) {
 	t.Run(
 		"does not panic when an out-of-bounds position is provided",
 		func(t *testing.T) {
+			t.Parallel()
+
 			grid := newGrid(
-				slices.Repeat([][]uint8{{1, 2, 3, 4}}, 4),
+				slices.Repeat([][]int{{1, 2, 3, 4}}, 4),
 				Must(puzzle.NewLayoutFromCellCount(16)),
 			)
 
@@ -75,10 +86,14 @@ func TestGridSet(t *testing.T) {
 }
 
 func TestGridClone(t *testing.T) {
-	rows := slices.Repeat([][]uint8{{1, 2, 3, 4}}, 4)
+	t.Parallel()
+
+	rows := slices.Repeat([][]int{{1, 2, 3, 4}}, 4)
 	layout := Must(puzzle.NewLayoutFromCellCount(16))
 
 	t.Run("mutating the clone leaves the original unchanged", func(t *testing.T) {
+		t.Parallel()
+
 		original := newGrid(rows, layout)
 		clone := original.Clone()
 
@@ -86,11 +101,14 @@ func TestGridClone(t *testing.T) {
 
 		originalCells := slices.Collect(original.Cells())
 		cloneCells := slices.Collect(clone.Cells())
+
 		assert.Equal(t, puzzle.NewSingleCandidate(1), originalCells[0].Candidates())
 		assert.Equal(t, puzzle.NewSingleCandidate(2), cloneCells[0].Candidates())
 	})
 
 	t.Run("mutating the original leaves the clone unchanged", func(t *testing.T) {
+		t.Parallel()
+
 		original := newGrid(rows, layout)
 		clone := original.Clone()
 
@@ -98,12 +116,15 @@ func TestGridClone(t *testing.T) {
 
 		originalCells := slices.Collect(original.Cells())
 		cloneCells := slices.Collect(clone.Cells())
+
 		assert.Equal(t, puzzle.NewSingleCandidate(2), originalCells[0].Candidates())
 		assert.Equal(t, puzzle.NewSingleCandidate(1), cloneCells[0].Candidates())
 	})
 }
 
 func TestGridPeersOf(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name     string
 		layout   puzzle.Layout
@@ -125,8 +146,10 @@ func TestGridPeersOf(t *testing.T) {
 			layout: Must(puzzle.NewLayoutFromCellCount(36)),
 			pos:    puzzle.NewPosition(2, 2),
 			expected: []puzzle.Position{
-				puzzle.NewPosition(2, 0), puzzle.NewPosition(2, 1), puzzle.NewPosition(2, 3), puzzle.NewPosition(2, 4), puzzle.NewPosition(2, 5), // row
-				puzzle.NewPosition(0, 2), puzzle.NewPosition(1, 2), puzzle.NewPosition(3, 2), puzzle.NewPosition(4, 2), puzzle.NewPosition(5, 2), // column
+				puzzle.NewPosition(2, 0), puzzle.NewPosition(2, 1), puzzle.NewPosition(2, 3),
+				puzzle.NewPosition(2, 4), puzzle.NewPosition(2, 5), // row
+				puzzle.NewPosition(0, 2), puzzle.NewPosition(1, 2), puzzle.NewPosition(3, 2),
+				puzzle.NewPosition(4, 2), puzzle.NewPosition(5, 2), // column
 				puzzle.NewPosition(3, 0), puzzle.NewPosition(3, 1), // block
 			},
 		},
@@ -142,10 +165,13 @@ func TestGridPeersOf(t *testing.T) {
 		t.Run(
 			testCase.name,
 			func(t *testing.T) {
-				rows := make([][]uint8, testCase.layout.GridSize())
+				t.Parallel()
+
+				rows := make([][]int, testCase.layout.GridSize())
 				for i := range testCase.layout.GridSize() {
-					rows[i] = make([]uint8, testCase.layout.GridSize())
+					rows[i] = make([]int, testCase.layout.GridSize())
 				}
+
 				grid := newGrid(rows, testCase.layout)
 
 				positions := make([]puzzle.Position, 0, len(testCase.expected))
@@ -159,12 +185,14 @@ func TestGridPeersOf(t *testing.T) {
 	}
 }
 
-func newGrid(rows [][]uint8, layout puzzle.Layout) *puzzle.Grid {
+func newGrid(rows [][]int, layout puzzle.Layout) *puzzle.Grid {
 	cells := make([]puzzle.Candidates, 0, layout.GridSize()*layout.GridSize())
+
 	for _, rowValues := range rows {
 		for _, value := range rowValues {
 			cells = append(cells, puzzle.NewSingleCandidate(value))
 		}
 	}
+
 	return Must(puzzle.NewGrid(cells, layout))
 }

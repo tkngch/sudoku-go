@@ -27,10 +27,12 @@ func NewGrid(cells []Candidates, layout Layout) (*Grid, error) {
 			"expected %d cells, got %d: %w",
 			layout.CellCount(), len(cells), ErrInvalidCells,
 		)
+
 		return nil, err
 	}
 
 	grid := Grid{cellCandidates: slices.Clone(cells), layout: layout}
+
 	return &grid, nil
 }
 
@@ -74,6 +76,7 @@ func (g *Grid) Set(position Position, newCandidates Candidates) {
 	if !g.layout.IsOnGrid(position) {
 		return
 	}
+
 	index := g.layout.RowMajorIndex(position)
 	g.cellCandidates[index] = newCandidates
 }
