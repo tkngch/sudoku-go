@@ -18,10 +18,10 @@ type Candidates uint16
 const maxCandidateValue = 16
 
 // Make a new candidate that represents the ranged values: from 1 to the
-// provided max-value.
+// provided max-value or 16, whichever is smaller.
 func NewCandidatesForRange(maxValue uint8) Candidates {
 	var d Candidates
-	for value := uint8(1); value <= maxValue; value++ {
+	for value := uint8(1); value <= maxValue && value <= maxCandidateValue; value++ {
 		d |= NewSingleCandidate(value)
 	}
 	return d

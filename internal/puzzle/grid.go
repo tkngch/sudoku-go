@@ -14,7 +14,7 @@ import (
 // same underlying cells. Mutating such a copy with Set mutates every other
 // copy. Use Clone for an independent copy, or With for a copy-on-write update.
 type Grid struct {
-	cells  []Cell
+	cells  []Candidates
 	layout Layout
 }
 
@@ -23,24 +23,13 @@ var ErrInvalidCells = errors.New("invalid cells")
 // NewGrid returns a Grid holding cells laid out by layout. It returns
 // ErrInvalidCells when len(cells) != layout.CellCount() or the cells are not in
 // row-major order.
-func NewGrid(cells []Cell, layout Layout) (Grid, error) {
+func NewGrid(cells []Candidates, layout Layout) (Grid, error) {
 	if len(cells) != layout.CellCount() {
 		err := fmt.Errorf(
 			"expected %d cells, got %d: %w",
 			layout.CellCount(), len(cells), ErrInvalidCells,
 		)
 		return Grid{}, err
-	}
-
-	for i, cell := range cells {
-		expected := NewPosition(i/layout.GridSize(), i%layout.GridSize())
-		if cell.Position() != expected {
-			err := fmt.Errorf(
-				"cells are not row-major ordered (cell %d has position %v when %v is expected): %w",
-				i, cell.Position(), expected, ErrInvalidCells,
-			)
-			return Grid{}, err
-		}
 	}
 
 	return Grid{cells: cells, layout: layout}, nil
@@ -52,16 +41,20 @@ func (g Grid) PeersOf(position Position) iter.Seq[Cell] {
 	return func(yield func(Cell) bool) {
 		for peerPosition := range g.layout.PeersOf(position) {
 			peer := g.cells[g.layout.RowMajorIndex(peerPosition)]
-			if !yield(peer) {
+			if !yield(NewCell(peerPosition, peer)) {
 				return
 			}
 		}
 	}
 }
 
-// Iterate over the cells in row-major order.
-func (g Grid) Cells() iter.Seq[Cell] {
-	return slices.Values(g.cells)
+func (g Grid) Cells() []Cell {
+	cells := make([]Cell, len(g.cells))
+	for i, candidates := range g.cells {
+		position := NewPosition(i/g.layout.GridSize(), i%g.layout.GridSize())
+		cells[i] = NewCell(position, candidates)
+	}
+	return cells
 }
 
 // Clone returns an independent copy of the grid whose cells can be mutated with
@@ -90,5 +83,5 @@ func (g *Grid) Set(position Position, newCandidates Candidates) {
 		return
 	}
 	index := g.layout.RowMajorIndex(position)
-	g.cells[index] = g.cells[index].With(newCandidates)
+	g.cells[index] = newCandidates
 }

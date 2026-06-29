@@ -11,37 +11,13 @@ import (
 func TestNewGrid(t *testing.T) {
 	testCases := []struct {
 		name          string
-		cells         []puzzle.Cell
+		cells         []puzzle.Candidates
 		layout        puzzle.Layout
 		expectedError error
 	}{
 		{
 			name:          "not enough cells for the layout",
-			cells:         []puzzle.Cell{},
-			layout:        Must(puzzle.NewLayoutFromCellCount(16)),
-			expectedError: puzzle.ErrInvalidCells,
-		},
-		{
-			name: "cells are incorrectly ordered",
-			cells: []puzzle.Cell{
-				puzzle.NewCell(puzzle.NewPosition(0, 0), puzzle.NewCandidatesForRange(4)),
-				puzzle.NewCell(puzzle.NewPosition(0, 1), puzzle.NewCandidatesForRange(4)),
-				puzzle.NewCell(puzzle.NewPosition(0, 2), puzzle.NewCandidatesForRange(4)),
-				puzzle.NewCell(puzzle.NewPosition(0, 3), puzzle.NewCandidatesForRange(4)),
-				puzzle.NewCell(puzzle.NewPosition(1, 0), puzzle.NewCandidatesForRange(4)),
-				puzzle.NewCell(puzzle.NewPosition(1, 1), puzzle.NewCandidatesForRange(4)),
-				puzzle.NewCell(puzzle.NewPosition(1, 2), puzzle.NewCandidatesForRange(4)),
-				puzzle.NewCell(puzzle.NewPosition(1, 3), puzzle.NewCandidatesForRange(4)),
-				puzzle.NewCell(puzzle.NewPosition(2, 0), puzzle.NewCandidatesForRange(4)),
-				puzzle.NewCell(puzzle.NewPosition(2, 1), puzzle.NewCandidatesForRange(4)),
-				puzzle.NewCell(puzzle.NewPosition(2, 2), puzzle.NewCandidatesForRange(4)),
-				puzzle.NewCell(puzzle.NewPosition(2, 3), puzzle.NewCandidatesForRange(4)),
-				puzzle.NewCell(puzzle.NewPosition(3, 0), puzzle.NewCandidatesForRange(4)),
-				puzzle.NewCell(puzzle.NewPosition(3, 1), puzzle.NewCandidatesForRange(4)),
-				// The last two cells are not row-major ordered.
-				puzzle.NewCell(puzzle.NewPosition(3, 3), puzzle.NewCandidatesForRange(4)),
-				puzzle.NewCell(puzzle.NewPosition(3, 2), puzzle.NewCandidatesForRange(4)),
-			},
+			cells:         []puzzle.Candidates{},
 			layout:        Must(puzzle.NewLayoutFromCellCount(16)),
 			expectedError: puzzle.ErrInvalidCells,
 		},
@@ -70,7 +46,7 @@ func TestGridSet(t *testing.T) {
 			newCandidate := puzzle.NewSingleCandidate(9)
 			grid.Set(puzzle.NewPosition(1, 0), newCandidate)
 
-			cells := slices.Collect(grid.Cells())
+			cells := grid.Cells()
 			assert.Equal(t, newCandidate, cells[4].Candidates(), "cell is updated in place")
 			// Every other cell is untouched.
 			assert.Equal(t, puzzle.NewSingleCandidate(1), cells[0].Candidates())
@@ -109,8 +85,8 @@ func TestGridWith(t *testing.T) {
 		func(t *testing.T) {
 			modified := original.With(puzzle.NewPosition(0, 0), puzzle.NewSingleCandidate(9))
 
-			originalCells := slices.Collect(original.Cells())
-			modifiedCells := slices.Collect(modified.Cells())
+			originalCells := original.Cells()
+			modifiedCells := modified.Cells()
 			// The returned grid holds the new value.
 			assert.Equal(t, puzzle.NewSingleCandidate(9), modifiedCells[0].Candidates())
 			// The original is left untouched at the changed position.
@@ -142,8 +118,8 @@ func TestGridClone(t *testing.T) {
 
 		clone.Set(puzzle.NewPosition(0, 0), puzzle.NewSingleCandidate(2))
 
-		originalCells := slices.Collect(original.Cells())
-		cloneCells := slices.Collect(clone.Cells())
+		originalCells := original.Cells()
+		cloneCells := clone.Cells()
 		assert.Equal(t, puzzle.NewSingleCandidate(1), originalCells[0].Candidates())
 		assert.Equal(t, puzzle.NewSingleCandidate(2), cloneCells[0].Candidates())
 	})
@@ -154,8 +130,8 @@ func TestGridClone(t *testing.T) {
 
 		original.Set(puzzle.NewPosition(0, 0), puzzle.NewSingleCandidate(2))
 
-		originalCells := slices.Collect(original.Cells())
-		cloneCells := slices.Collect(clone.Cells())
+		originalCells := original.Cells()
+		cloneCells := clone.Cells()
 		assert.Equal(t, puzzle.NewSingleCandidate(2), originalCells[0].Candidates())
 		assert.Equal(t, puzzle.NewSingleCandidate(1), cloneCells[0].Candidates())
 	})
@@ -218,11 +194,10 @@ func TestGridPeersOf(t *testing.T) {
 }
 
 func newGrid(rows [][]uint8, layout puzzle.Layout) puzzle.Grid {
-	cells := make([]puzzle.Cell, 0, layout.GridSize()*layout.GridSize())
-	for row, rowValues := range rows {
-		for col, value := range rowValues {
-			position := puzzle.NewPosition(row, col)
-			cells = append(cells, puzzle.NewCell(position, puzzle.NewSingleCandidate(value)))
+	cells := make([]puzzle.Candidates, 0, layout.GridSize()*layout.GridSize())
+	for _, rowValues := range rows {
+		for _, value := range rowValues {
+			cells = append(cells, puzzle.NewSingleCandidate(value))
 		}
 	}
 	return Must(puzzle.NewGrid(cells, layout))

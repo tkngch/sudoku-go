@@ -7,14 +7,14 @@ import (
 	"github.com/tkngch/sudoku-go/internal/puzzle"
 )
 
-func TestCellWith(t *testing.T) {
-	cell := puzzle.NewCell(puzzle.NewPosition(1, 2), puzzle.NewSingleCandidate(5))
-	replaced := cell.With(puzzle.NewSingleCandidate(7))
+func TestNewCell(t *testing.T) {
+	position := puzzle.NewPosition(1, 2)
+	candidates := puzzle.NewSingleCandidate(5)
+	cell := puzzle.NewCell(position, candidates)
 
-	// The position is preserved and the candidates are replaced.
-	assert.Equal(t, puzzle.NewPosition(1, 2), replaced.Position())
-	assert.Equal(t, puzzle.NewSingleCandidate(7), replaced.Candidates())
+	assert.Equal(t, position, cell.Position())
+	assert.Equal(t, candidates, cell.Candidates())
 
-	// The original cell is left unchanged.
-	assert.Equal(t, puzzle.NewSingleCandidate(5), cell.Candidates())
+	assert.Contains(t, cell.String(), position.String())
+	assert.Contains(t, cell.String(), candidates.String())
 }

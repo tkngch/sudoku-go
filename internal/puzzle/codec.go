@@ -3,7 +3,6 @@ package puzzle
 import (
 	"errors"
 	"fmt"
-	"slices"
 	"strings"
 )
 
@@ -23,23 +22,18 @@ func Parse(input string) (Grid, error) {
 	}
 
 	minCellValue, maxCellValue := uint8(1), uint8(layout.GridSize())
-	cells := make([]Cell, cellCount)
+	cells := make([]Candidates, cellCount)
 	for i := range cellCount {
 		char := input[i]
-		position := NewPosition(i/layout.GridSize(), i%layout.GridSize())
 
-		var candidates Candidates
 		value, isOk := toUint8(char)
 		if isOk && value >= minCellValue && value <= maxCellValue {
-			candidates = NewSingleCandidate(value)
+			cells[i] = NewSingleCandidate(value)
 		} else if isOk && value == 0 {
-			candidates = NewCandidatesForRange(maxCellValue)
+			cells[i] = NewCandidatesForRange(maxCellValue)
 		} else {
 			return Grid{}, fmt.Errorf("parse %q: %w", char, ErrInvalidCharacter)
 		}
-
-		cells[i] = NewCell(position, candidates)
-
 	}
 	return NewGrid(cells, layout)
 }
@@ -49,9 +43,9 @@ func Parse(input string) (Grid, error) {
 //
 // It is lossy: a cell with more than one candidate is written as '.', so String
 // preserves only cells with single candidates and is not a serialization of
-// unsolved puzzule.
+// unsolved puzzle.
 func (g Grid) String() string {
-	cells := slices.Collect(g.Cells())
+	cells := g.Cells()
 
 	var b strings.Builder
 	b.Grow(len(cells))
@@ -66,7 +60,7 @@ func (g Grid) Render() string {
 	rowsAsString := make([]string, 0, g.layout.GridSize())
 
 	row := make([]string, 0, g.layout.GridSize()*3)
-	for cell := range g.Cells() {
+	for _, cell := range g.Cells() {
 		if cell.Position().Col() == 0 && g.layout.IsFirstRowInBlock(cell.Position()) {
 			rowsAsString = append(rowsAsString, g.rowSeparator())
 		}
