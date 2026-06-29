@@ -74,40 +74,6 @@ func TestGridSet(t *testing.T) {
 	)
 }
 
-func TestGridWith(t *testing.T) {
-	original := newGrid(
-		slices.Repeat([][]uint8{{1, 2, 3, 4}}, 4),
-		Must(puzzle.NewLayoutFromCellCount(16)),
-	)
-
-	t.Run(
-		"cell is updated after copy",
-		func(t *testing.T) {
-			modified := original.With(puzzle.NewPosition(0, 0), puzzle.NewSingleCandidate(9))
-
-			originalCells := slices.Collect(original.Cells())
-			modifiedCells := slices.Collect(modified.Cells())
-			// The returned grid holds the new value.
-			assert.Equal(t, puzzle.NewSingleCandidate(9), modifiedCells[0].Candidates())
-			// The original is left untouched at the changed position.
-			assert.Equal(t, puzzle.NewSingleCandidate(1), originalCells[0].Candidates())
-			// Every other cell is shared/equal between the two grids.
-			for i := 1; i < 4; i++ {
-				assert.Equal(t, originalCells[i].Candidates(), modifiedCells[i].Candidates())
-			}
-		},
-	)
-
-	t.Run(
-		"noop when an out-of-bounds position is provided",
-		func(t *testing.T) {
-			modified := original.With(puzzle.NewPosition(0, 4), puzzle.NewSingleCandidate(9))
-			assert.Equal(t, original, modified)
-		},
-	)
-
-}
-
 func TestGridClone(t *testing.T) {
 	rows := slices.Repeat([][]uint8{{1, 2, 3, 4}}, 4)
 	layout := Must(puzzle.NewLayoutFromCellCount(16))
@@ -193,7 +159,7 @@ func TestGridPeersOf(t *testing.T) {
 	}
 }
 
-func newGrid(rows [][]uint8, layout puzzle.Layout) puzzle.Grid {
+func newGrid(rows [][]uint8, layout puzzle.Layout) *puzzle.Grid {
 	cells := make([]puzzle.Candidates, 0, layout.GridSize()*layout.GridSize())
 	for _, rowValues := range rows {
 		for _, value := range rowValues {

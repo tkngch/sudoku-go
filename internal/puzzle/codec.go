@@ -14,12 +14,12 @@ var ErrInvalidCharacter = errors.New("invalid character")
 // NewLayoutFromCellCount). '0' or '.' is an empty cell (all candidates);
 // '1'-'9' and 'a'-'g'/'A'-'G' (values 10-16) are givens. It returns
 // ErrInvalidCellCount or ErrInvalidCharacter for malformed input.
-func Parse(input string) (Grid, error) {
+func Parse(input string) (*Grid, error) {
 	cellCount := len(input)
 
 	layout, err := NewLayoutFromCellCount(cellCount)
 	if err != nil {
-		return Grid{}, fmt.Errorf("parse: %w", err)
+		return nil, fmt.Errorf("parse: %w", err)
 	}
 
 	minCellValue, maxCellValue := uint8(1), uint8(layout.GridSize())
@@ -33,7 +33,7 @@ func Parse(input string) (Grid, error) {
 		} else if ok && value == 0 {
 			cells[i] = NewCandidatesForRange(maxCellValue)
 		} else {
-			return Grid{}, fmt.Errorf("parse %q: %w", char, ErrInvalidCharacter)
+			return nil, fmt.Errorf("parse %q: %w", char, ErrInvalidCharacter)
 		}
 	}
 	return NewGrid(cells, layout)
@@ -45,7 +45,7 @@ func Parse(input string) (Grid, error) {
 // It is lossy: a cell with more than one candidate is written as '.', so String
 // preserves only cells with single candidates and is not a serialization of
 // unsolved puzzle.
-func (g Grid) String() string {
+func (g *Grid) String() string {
 	cells := slices.Collect(g.Cells())
 
 	var b strings.Builder
@@ -57,7 +57,7 @@ func (g Grid) String() string {
 }
 
 // Multiline, pretty printing of Grid.
-func (g Grid) Render() string {
+func (g *Grid) Render() string {
 	if len(g.cellCandidates) == 0 {
 		return ""
 	}
@@ -87,7 +87,7 @@ func (g Grid) Render() string {
 	return strings.Join(rowsAsString, "\n")
 }
 
-func (g Grid) rowSeparator() string {
+func (g *Grid) rowSeparator() string {
 	blockCount := g.layout.GridSize() / g.layout.blockColCount
 	separators := make([]string, blockCount)
 	for i := range blockCount {

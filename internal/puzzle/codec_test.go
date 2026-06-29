@@ -13,37 +13,37 @@ func TestParse(t *testing.T) {
 	testCases := []struct {
 		name          string
 		input         string
-		expected      puzzle.Grid
+		expected      *puzzle.Grid
 		expectedError error
 	}{
 		{
 			name:          "empty",
 			input:         "",
-			expected:      puzzle.Grid{},
+			expected:      nil,
 			expectedError: puzzle.ErrInvalidCellCount,
 		},
 		{
 			name:          "too short",
 			input:         "123",
-			expected:      puzzle.Grid{},
+			expected:      nil,
 			expectedError: puzzle.ErrInvalidCellCount,
 		},
 		{
 			name:          "too large",
 			input:         strings.Repeat(".", 255),
-			expected:      puzzle.Grid{},
+			expected:      nil,
 			expectedError: puzzle.ErrInvalidCellCount,
 		},
 		{
 			name:          "unexpectedly large value",
 			input:         "9234123412341234", // 9 is unexpected for 4x4 grid
-			expected:      puzzle.Grid{},
+			expected:      nil,
 			expectedError: puzzle.ErrInvalidCharacter,
 		},
 		{
 			name:          "unexpected value",
 			input:         "z234123412341234", // z is unexpected
-			expected:      puzzle.Grid{},
+			expected:      nil,
 			expectedError: puzzle.ErrInvalidCharacter,
 		},
 	}
