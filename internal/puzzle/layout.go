@@ -7,6 +7,10 @@ import (
 	"slices"
 )
 
+// Layout describes the geometry of a Sudoku grid: its block dimensions, the
+// derived grid size, and the precomputed peers of every cell. A Layout is
+// immutable once constructed, so a value may be freely copied and shared across
+// goroutines.
 type Layout struct {
 	blockRowCount, blockColCount int
 	peers                        [][]Position
@@ -37,14 +41,15 @@ func newLayout(r, c int) Layout {
 	return l
 }
 
-func (l Layout) BlockColCount() int { return l.blockColCount }
-
 // Return the number of rows or columns in a grid. A grid is a square-shaped, so
 // its number of rows equals to its number of columns.
 func (l Layout) GridSize() int { return l.blockRowCount * l.blockColCount }
 
 func (l Layout) CellCount() int { return l.GridSize() * l.GridSize() }
 
+// Iterate over the positions that share a row, column, or block with the given
+// position, excluding itself. It yields nothing when the position is off the
+// grid.
 func (l Layout) PeersOf(position Position) iter.Seq[Position] {
 	if !l.IsOnGrid(position) {
 		return func(yield func(Position) bool) {}

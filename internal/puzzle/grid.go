@@ -20,6 +20,9 @@ type Grid struct {
 
 var ErrInvalidCells = errors.New("invalid cells")
 
+// NewGrid returns a Grid holding cells laid out by layout. It returns
+// ErrInvalidCells when len(cells) != layout.CellCount() or the cells are not in
+// row-major order.
 func NewGrid(cells []Cell, layout Layout) (Grid, error) {
 	if len(cells) != layout.CellCount() {
 		err := fmt.Errorf(
@@ -43,6 +46,8 @@ func NewGrid(cells []Cell, layout Layout) (Grid, error) {
 	return Grid{cells: cells, layout: layout}, nil
 }
 
+// PeersOf returns an iterator over the cells that share a row, column, or block
+// with position, excluding the cell at position itself.
 func (g Grid) PeersOf(position Position) iter.Seq[Cell] {
 	return func(yield func(Cell) bool) {
 		for peerPosition := range g.layout.PeersOf(position) {

@@ -9,6 +9,11 @@ import (
 
 var ErrInvalidCharacter = errors.New("invalid character")
 
+// Parse reads a puzzle from its compact form: one character per cell in
+// row-major order, whose length selects the layout (see
+// NewLayoutFromCellCount). '0' or '.' is an empty cell (all candidates);
+// '1'-'9' and 'a'-'g'/'A'-'G' (values 10-16) are givens. It returns
+// ErrInvalidCellCount or ErrInvalidCharacter for malformed input.
 func Parse(input string) (Grid, error) {
 	cellCount := len(input)
 
@@ -39,7 +44,12 @@ func Parse(input string) (Grid, error) {
 	return NewGrid(cells, layout)
 }
 
-// Compact representation of grid.
+// Return the compact, single-line form of the grid: one character per cell in
+// row-major order, inverse to Parse for solved or given cells.
+//
+// It is lossy: a cell with more than one candidate is written as '.', so String
+// preserves only cells with single candidates and is not a serialization of
+// unsolved puzzule.
 func (g Grid) String() string {
 	cells := slices.Collect(g.Cells())
 
@@ -79,10 +89,10 @@ func (g Grid) Render() string {
 }
 
 func (g Grid) rowSeparator() string {
-	blockCount := g.layout.GridSize() / g.layout.BlockColCount()
+	blockCount := g.layout.GridSize() / g.layout.blockColCount
 	separators := make([]string, blockCount)
 	for i := range blockCount {
-		separators[i] = strings.Repeat("-", g.layout.BlockColCount()*2+1)
+		separators[i] = strings.Repeat("-", g.layout.blockColCount*2+1)
 	}
 	return "+" + strings.Join(separators, "+") + "+"
 }
