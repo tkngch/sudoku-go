@@ -76,8 +76,8 @@ func (c Candidates) String() string {
 	return strings.Join(vals, "")
 }
 
-// Return the display char for the first candidate value. 1..9 are mapped to
-// '1'..'9', and 10..16 are mapped 'a'..'g'.
+// char returns the display char for the first candidate value. 1..9 are mapped
+// to '1'..'9', and 10..16 are mapped 'a'..'g'.
 func (c Candidates) char() byte {
 	v := bits.TrailingZeros16(uint16(c)) + 1
 	switch {

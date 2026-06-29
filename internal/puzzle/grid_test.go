@@ -62,8 +62,14 @@ func TestGridSet(t *testing.T) {
 			assert.Equal(t, puzzle.NewSingleCandidate(3), cells[2].Candidates())
 			assert.Equal(t, puzzle.NewSingleCandidate(4), cells[3].Candidates())
 
-			for i := 5; i < 16; i++ {
-				assert.Equalf(t, puzzle.NewSingleCandidate(i%4+1), cells[i].Candidates(), "cell %d", i)
+			for idx := 5; idx < 16; idx++ {
+				assert.Equalf(
+					t,
+					puzzle.NewSingleCandidate(idx%4+1),
+					cells[idx].Candidates(),
+					"cell %d",
+					idx,
+				)
 			}
 		},
 	)
@@ -136,8 +142,15 @@ func TestGridPeersOf(t *testing.T) {
 			layout: Must(puzzle.NewLayoutFromCellCount(16)),
 			pos:    puzzle.NewPosition(0, 0),
 			expected: []puzzle.Position{
-				puzzle.NewPosition(0, 1), puzzle.NewPosition(0, 2), puzzle.NewPosition(0, 3), // row
-				puzzle.NewPosition(1, 0), puzzle.NewPosition(2, 0), puzzle.NewPosition(3, 0), // column
+				puzzle.NewPosition(0, 1),
+				puzzle.NewPosition(0, 2),
+				puzzle.NewPosition(0, 3), // row
+				puzzle.NewPosition(
+					1,
+					0,
+				),
+				puzzle.NewPosition(2, 0),
+				puzzle.NewPosition(3, 0), // column
 				puzzle.NewPosition(1, 1), // block
 			},
 		},
