@@ -142,14 +142,11 @@ func TestGridPeersOf(t *testing.T) {
 			layout: Must(puzzle.NewLayoutFromCellCount(16)),
 			pos:    puzzle.NewPosition(0, 0),
 			expected: []puzzle.Position{
-				puzzle.NewPosition(0, 1),
-				puzzle.NewPosition(0, 2),
+				puzzle.NewPosition(0, 1), // row and block
+				puzzle.NewPosition(0, 2), // row
 				puzzle.NewPosition(0, 3), // row
-				puzzle.NewPosition(
-					1,
-					0,
-				),
-				puzzle.NewPosition(2, 0),
+				puzzle.NewPosition(1, 0), // colum and block
+				puzzle.NewPosition(2, 0), // column
 				puzzle.NewPosition(3, 0), // column
 				puzzle.NewPosition(1, 1), // block
 			},
@@ -159,11 +156,18 @@ func TestGridPeersOf(t *testing.T) {
 			layout: Must(puzzle.NewLayoutFromCellCount(36)),
 			pos:    puzzle.NewPosition(2, 2),
 			expected: []puzzle.Position{
-				puzzle.NewPosition(2, 0), puzzle.NewPosition(2, 1), puzzle.NewPosition(2, 3),
-				puzzle.NewPosition(2, 4), puzzle.NewPosition(2, 5), // row
-				puzzle.NewPosition(0, 2), puzzle.NewPosition(1, 2), puzzle.NewPosition(3, 2),
-				puzzle.NewPosition(4, 2), puzzle.NewPosition(5, 2), // column
-				puzzle.NewPosition(3, 0), puzzle.NewPosition(3, 1), // block
+				puzzle.NewPosition(2, 0), // row and block
+				puzzle.NewPosition(2, 1), // row and block
+				puzzle.NewPosition(2, 3), // row
+				puzzle.NewPosition(2, 4), // row
+				puzzle.NewPosition(2, 5), // row
+				puzzle.NewPosition(0, 2), // column
+				puzzle.NewPosition(1, 2), // column
+				puzzle.NewPosition(3, 2), // column and block
+				puzzle.NewPosition(4, 2), // column
+				puzzle.NewPosition(5, 2), // column
+				puzzle.NewPosition(3, 0), // column and block
+				puzzle.NewPosition(3, 1), // block
 			},
 		},
 		{

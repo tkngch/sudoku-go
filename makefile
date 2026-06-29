@@ -10,7 +10,7 @@ vet:
 
 .PHONY: lint
 lint:
-	go fmt ./...
+	gofmt -l .
 	golangci-lint run ./...
 
 .PHONY: test
