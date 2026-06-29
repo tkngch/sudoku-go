@@ -11,6 +11,8 @@ import (
 )
 
 func TestSolve(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name     string
 		puzzle   []string
@@ -97,25 +99,25 @@ func TestSolve(t *testing.T) {
 		t.Run(
 			testCase.name,
 			func(t *testing.T) {
-				testSolve(t, testCase.puzzle, testCase.solution)
+				t.Parallel()
+
+				grid, err := puzzle.Parse(strings.Join(testCase.puzzle, ""))
+				require.NoErrorf(t, err, "could not parse [%v]", testCase.puzzle)
+
+				actual, err := solver.Solve(grid)
+				if testCase.solution == nil {
+					require.ErrorIs(t, err, solver.ErrSolutionNotFound)
+
+					return
+				}
+
+				require.NoError(t, err, "could not find a solution")
+
+				expected, err := puzzle.Parse(strings.Join(testCase.solution, ""))
+				require.NoErrorf(t, err, "could not parse [%v]", testCase.solution)
+
+				assert.Equalf(t, expected.String(), actual.String(), "expected\n%s\nactual\n%s", expected.Render(), actual.Render())
 			},
 		)
 	}
-}
-
-func testSolve(t *testing.T, input, solution []string) {
-	grid, err := puzzle.Parse(strings.Join(input, ""))
-	require.NoErrorf(t, err, "could not parse [%v]", input)
-
-	actual, err := solver.Solve(grid)
-	if solution == nil {
-		require.ErrorIs(t, err, solver.ErrSolutionNotFound)
-		return
-	}
-	require.NoError(t, err, "could not find a solution")
-
-	expected, err := puzzle.Parse(strings.Join(solution, ""))
-	require.NoErrorf(t, err, "could not parse [%v]", solution)
-
-	assert.Equalf(t, expected.String(), actual.String(), "expected\n%s\nactual\n%s", expected.Render(), actual.Render())
 }

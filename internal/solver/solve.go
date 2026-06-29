@@ -8,11 +8,12 @@ import (
 
 var ErrSolutionNotFound = errors.New("solution not found")
 
-// Return a solved copy of the grid, or ErrSolutionNotFound if the grid has no
-// solution. The input grid is not modified.
+// Solve returns a solved copy of the grid, or ErrSolutionNotFound if the grid
+// has no solution. The input grid is not modified.
 func Solve(grid *puzzle.Grid) (*puzzle.Grid, error) {
 	grid = grid.Clone() // do not mutate the input argument
 	dropAllInvalidCandidates(grid)
+
 	if isSolved(grid) {
 		return grid, nil
 	}
@@ -25,16 +26,18 @@ func isSolved(grid *puzzle.Grid) bool {
 		if cell.Candidates().Count() != 1 {
 			return false
 		}
+
 		for peer := range grid.PeersOf(cell.Position()) {
 			if cell.Candidates() == peer.Candidates() {
 				return false
 			}
 		}
 	}
+
 	return true
 }
 
-// Mutate the grid to drop invalid candidates for all cells
+// Mutate the grid to drop invalid candidates for all cells.
 func dropAllInvalidCandidates(grid *puzzle.Grid) {
 	for {
 		isAnyValueDropped := false
@@ -50,9 +53,10 @@ func dropAllInvalidCandidates(grid *puzzle.Grid) {
 	}
 }
 
-// Mutate the grid to drop invalid candidates for the cell
+// Mutate the grid to drop invalid candidates for the cell.
 func dropInvalidCandidates(grid *puzzle.Grid, cell puzzle.Cell) bool {
 	invalidCandidates := puzzle.NewSingleCandidate(0)
+
 	for peer := range grid.PeersOf(cell.Position()) {
 		if peer.Candidates().Count() == 1 {
 			invalidCandidates = invalidCandidates.Union(peer.Candidates())
@@ -62,6 +66,7 @@ func dropInvalidCandidates(grid *puzzle.Grid, cell puzzle.Cell) bool {
 	newCandidates := cell.Candidates().Remove(invalidCandidates)
 	if cell.Candidates() != newCandidates {
 		grid.Set(cell.Position(), newCandidates)
+
 		return true
 	}
 
@@ -97,9 +102,10 @@ func searchSolution(grid *puzzle.Grid) (*puzzle.Grid, error) {
 }
 
 // Find the cell that has the smallest number of candidates among the cells
-// which has more than one candidates
+// which has more than one candidates.
 func findUnfilledCell(grid *puzzle.Grid) (puzzle.Cell, bool) {
 	isFound := false
+
 	var foundCell puzzle.Cell
 
 	for cell := range grid.Cells() {
