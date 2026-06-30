@@ -40,12 +40,19 @@ func NewSingleCandidate(value int) Candidates {
 	return 1 << (value - 1)
 }
 
+// Union returns the candidates present in either c or other.
 func (c Candidates) Union(other Candidates) Candidates {
 	return c | other
 }
 
+// Remove returns the candidates in c that are not in other.
 func (c Candidates) Remove(other Candidates) Candidates {
 	return c &^ other
+}
+
+// Contains reports whether every candidate in other is also present in c.
+func (c Candidates) Contains(other Candidates) bool {
+	return c&other == other
 }
 
 // All iterates over each candidate as a single-bit Candidates, in ascending
@@ -62,6 +69,7 @@ func (c Candidates) All() iter.Seq[Candidates] {
 	}
 }
 
+// Count returns the number of candidate values in c.
 func (c Candidates) Count() int {
 	return bits.OnesCount16(uint16(c))
 }

@@ -247,3 +247,44 @@ func TestCandidatesCount(t *testing.T) {
 		)
 	}
 }
+
+func TestCandidatesContains(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		name       string
+		candidates puzzle.Candidates
+		contains   puzzle.Candidates
+		expected   bool
+	}{
+		{
+			name:       "{1} contains 1",
+			candidates: 0b1,
+			contains:   0b1,
+			expected:   true,
+		},
+		{
+			name:       "{1,2} contains 1",
+			candidates: 0b11,
+			contains:   0b01,
+			expected:   true,
+		},
+		{
+			name:       "{2,3} does not contain 1",
+			candidates: 0b110,
+			contains:   0b01,
+			expected:   false,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(
+			testCase.name,
+			func(t *testing.T) {
+				t.Parallel()
+
+				assert.Equal(t, testCase.expected, testCase.candidates.Contains(testCase.contains))
+			},
+		)
+	}
+}

@@ -49,6 +49,10 @@ func Parse(input string) (*Grid, error) {
 // preserves only cells with single candidates and is not a serialization of
 // unsolved puzzle.
 func (g *Grid) String() string {
+	if g == nil {
+		return ""
+	}
+
 	cells := slices.Collect(g.Cells())
 
 	var builder strings.Builder
@@ -63,7 +67,7 @@ func (g *Grid) String() string {
 
 // Render returns multiline, pretty printing of Grid.
 func (g *Grid) Render() string {
-	if len(g.cellCandidates) == 0 {
+	if g == nil || len(g.cellCandidates) == 0 {
 		return ""
 	}
 
