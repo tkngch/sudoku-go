@@ -26,16 +26,7 @@ func Solve(grid *puzzle.Grid) (*puzzle.Grid, error) {
 		return nil, ErrSolutionNotFound
 	}
 
-	if isSolved(grid) {
-		return grid, nil
-	}
-
-	solution, err := searchSolution(grid)
-	if err != nil {
-		return nil, ErrSolutionNotFound
-	}
-
-	return solution, nil
+	return searchSolution(grid)
 }
 
 // eliminateInvalidCandidates propagates the values of the revealed cells to their
@@ -45,7 +36,7 @@ func eliminateInvalidCandidates(grid *puzzle.Grid, newlyRevealedCells []puzzle.C
 		revealed := newlyRevealedCells[0]
 		newlyRevealedCells = newlyRevealedCells[1:]
 
-		for peer := range grid.PeersOf(revealed.Position()) {
+		for peer := range grid.PeersOf(revealed.Position()).All() {
 			reduced := peer.Candidates().Remove(revealed.Candidates())
 			if reduced == peer.Candidates() {
 				continue
@@ -58,35 +49,69 @@ func eliminateInvalidCandidates(grid *puzzle.Grid, newlyRevealedCells []puzzle.C
 			grid.Set(peer.Position(), reduced)
 
 			if reduced.Count() == 1 {
-				newlyRevealedCells = append(
-					newlyRevealedCells,
-					puzzle.NewCell(peer.Position(), reduced),
-				)
+				// a naked single is revealed
+				nakedCell := puzzle.NewCell(peer.Position(), reduced)
+				newlyRevealedCells = append(newlyRevealedCells, nakedCell)
 			}
+
+			hiddenSingles, ok := revealHiddenSingles(grid, peer.Position(), revealed.Candidates())
+			if !ok {
+				return false
+			}
+
+			newlyRevealedCells = append(newlyRevealedCells, hiddenSingles...)
 		}
 	}
 
 	return true
 }
 
-func isSolved(grid *puzzle.Grid) bool {
-	for cell := range grid.Cells() {
-		if cell.Candidates().Count() != 1 {
-			return false
+// After a candidate value is eliminated from the position, this eliminated
+// candidate value should be filled in on one of its peers. If there is only one
+// cell in the peers that can take the eliminated candidate value, fill that
+// cell with it.
+func revealHiddenSingles(
+	grid *puzzle.Grid,
+	position puzzle.Position,
+	eliminatedCandidates puzzle.Candidates,
+) ([]puzzle.Cell, bool) {
+	hiddenSingles := make([]puzzle.Cell, 0)
+	if eliminatedCandidates.Count() != 1 {
+		return hiddenSingles, true
+	}
+
+	cellsWithEliminatedCandidates := make([]puzzle.Cell, 0)
+	for _, peers := range grid.PeersOf(position).Each() {
+		cellsWithEliminatedCandidates = cellsWithEliminatedCandidates[:0]
+
+		for peer := range peers {
+			if peer.Candidates().Contains(eliminatedCandidates) {
+				cellsWithEliminatedCandidates = append(cellsWithEliminatedCandidates, peer)
+			}
 		}
 
-		for peer := range grid.PeersOf(cell.Position()) {
-			if cell.Candidates() == peer.Candidates() {
-				return false
-			}
+		switch len(cellsWithEliminatedCandidates) {
+		case 0:
+			// None of the peers can take the eliminate value, so the value
+			// should not have been eliminated.
+			return nil, false
+
+		case 1:
+			grid.Set(cellsWithEliminatedCandidates[0].Position(), eliminatedCandidates)
+			hiddenSingles = append(
+				hiddenSingles,
+				puzzle.NewCell(cellsWithEliminatedCandidates[0].Position(), eliminatedCandidates),
+			)
+
+		default:
 		}
 	}
 
-	return true
+	return hiddenSingles, true
 }
 
 func searchSolution(grid *puzzle.Grid) (*puzzle.Grid, error) {
-	cell, isFound := findUnfilledCell(grid)
+	cell, isFound := unfilledCell(grid)
 	if !isFound {
 		if isSolved(grid) {
 			return grid, nil
@@ -114,9 +139,9 @@ func searchSolution(grid *puzzle.Grid) (*puzzle.Grid, error) {
 	return nil, ErrSolutionNotFound
 }
 
-// Find the cell that has the smallest number of candidates among the cells
-// which has more than one candidates.
-func findUnfilledCell(grid *puzzle.Grid) (puzzle.Cell, bool) {
+// unfilledCell finds the cell that has the smallest number of candidates
+// among the cells which has more than one candidates.
+func unfilledCell(grid *puzzle.Grid) (puzzle.Cell, bool) {
 	isFound := false
 
 	var foundCell puzzle.Cell
@@ -139,4 +164,20 @@ func findUnfilledCell(grid *puzzle.Grid) (puzzle.Cell, bool) {
 	}
 
 	return foundCell, isFound
+}
+
+func isSolved(grid *puzzle.Grid) bool {
+	for cell := range grid.Cells() {
+		if cell.Candidates().Count() != 1 {
+			return false
+		}
+
+		for peer := range grid.PeersOf(cell.Position()).All() {
+			if cell.Candidates() == peer.Candidates() {
+				return false
+			}
+		}
+	}
+
+	return true
 }

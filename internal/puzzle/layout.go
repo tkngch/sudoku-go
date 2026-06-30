@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"iter"
-	"slices"
 )
 
 // Layout describes the geometry of a Sudoku grid: its block dimensions, the
@@ -13,7 +12,9 @@ import (
 // goroutines.
 type Layout struct {
 	blockRowCount, blockColCount int
-	peers                        [][]Position
+	rowPeers                     [][]Position
+	colPeers                     [][]Position
+	blockPeers                   [][]Position
 }
 
 var ErrInvalidCellCount = errors.New("invalid cell count")
@@ -38,7 +39,7 @@ func NewLayoutFromCellCount(cellCount int) (Layout, error) {
 
 func newLayout(r, c int) Layout {
 	l := Layout{blockRowCount: r, blockColCount: c}
-	l.peers = l.allPeers()
+	l.rowPeers, l.colPeers, l.blockPeers = l.allPeers()
 
 	return l
 }
@@ -49,15 +50,19 @@ func (l Layout) GridSize() int { return l.blockRowCount * l.blockColCount }
 
 func (l Layout) CellCount() int { return l.GridSize() * l.GridSize() }
 
-// PeersOf iterates over the positions that share a row, column, or block with
-// the given position, excluding itself. It yields nothing when the position is
-// off the grid.
-func (l Layout) PeersOf(position Position) iter.Seq[Position] {
+// PeersOf returns iterators over the precomputed peers. A peer shares the row,
+// the column or the group with the provided position. When the provided
+// position is off the grid, PeersOf returns empty iterators.
+func (l Layout) PeersOf(position Position) Peers[Position] {
 	if !l.IsOnGrid(position) {
-		return func(yield func(Position) bool) {}
+		return NewEmptyPeers[Position]()
 	}
-	// return an iterator, to prevent the caller from altering the peers.
-	return slices.Values(l.peers[l.RowMajorIndex(position)])
+
+	return NewPeers[Position](
+		l.rowPeers[l.RowMajorIndex(position)],
+		l.colPeers[l.RowMajorIndex(position)],
+		l.blockPeers[l.RowMajorIndex(position)],
+	)
 }
 
 func (l Layout) IsOnGrid(position Position) bool {
@@ -92,26 +97,41 @@ func (l Layout) String() string {
 	)
 }
 
-func (l Layout) allPeers() [][]Position {
+func (l Layout) allPeers() ([][]Position, [][]Position, [][]Position) {
+	rowPeerCount := l.GridSize() - 1
+	colPeerCount := l.GridSize() - 1
 	blockPeerCount := l.blockRowCount*l.blockColCount - 1
-	rowPeerCount := l.GridSize() - l.blockColCount
-	colPeerCount := l.GridSize() - l.blockRowCount
-	peerCount := blockPeerCount + rowPeerCount + colPeerCount
 
-	peers := make([][]Position, l.CellCount())
+	rowPeers := make([][]Position, l.CellCount())
+	colPeers := make([][]Position, l.CellCount())
+	blockPeers := make([][]Position, l.CellCount())
+
 	for this := range l.allPositions() {
-		thisPeers := make([]Position, 0, peerCount)
+		index := l.RowMajorIndex(this)
+		rowPeers[index] = make([]Position, 0, rowPeerCount)
+		colPeers[index] = make([]Position, 0, colPeerCount)
+		blockPeers[index] = make([]Position, 0, blockPeerCount)
 
 		for that := range l.allPositions() {
-			if l.arePeers(this, that) {
-				thisPeers = append(thisPeers, that)
+			if this == that {
+				continue
+			}
+
+			if this.row == that.row {
+				rowPeers[index] = append(rowPeers[index], that)
+			}
+
+			if this.col == that.col {
+				colPeers[index] = append(colPeers[index], that)
+			}
+
+			if l.areInSameBlock(this, that) {
+				blockPeers[index] = append(blockPeers[index], that)
 			}
 		}
-
-		peers[l.RowMajorIndex(this)] = thisPeers
 	}
 
-	return peers
+	return rowPeers, colPeers, blockPeers
 }
 
 func (l Layout) allPositions() iter.Seq[Position] {
@@ -124,22 +144,6 @@ func (l Layout) allPositions() iter.Seq[Position] {
 			}
 		}
 	}
-}
-
-func (l Layout) arePeers(positionA, positionB Position) bool {
-	if positionA == positionB {
-		return false
-	}
-
-	if positionA.row == positionB.row {
-		return true
-	}
-
-	if positionA.col == positionB.col {
-		return true
-	}
-
-	return l.areInSameBlock(positionA, positionB)
 }
 
 func (l Layout) areInSameBlock(positionA, positionB Position) bool {

@@ -48,6 +48,10 @@ func (c Candidates) Remove(other Candidates) Candidates {
 	return c &^ other
 }
 
+func (c Candidates) Contains(other Candidates) bool {
+	return c&other == other
+}
+
 // All iterates over each candidate as a single-bit Candidates, in ascending
 // value order. For example, the set {1, 3} (represented as 0b101) yields 0b001
 // then 0b100.

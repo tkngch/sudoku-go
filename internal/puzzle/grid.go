@@ -38,14 +38,13 @@ func NewGrid(cells []Candidates, layout Layout) (*Grid, error) {
 
 // PeersOf returns an iterator over the cells that share a row, column, or block
 // with position, excluding the cell at position itself.
-func (g *Grid) PeersOf(position Position) iter.Seq[Cell] {
-	return func(yield func(Cell) bool) {
-		for peerPosition := range g.layout.PeersOf(position) {
-			peer := g.cellCandidates[g.layout.RowMajorIndex(peerPosition)]
-			if !yield(NewCell(peerPosition, peer)) {
-				return
-			}
-		}
+func (g *Grid) PeersOf(position Position) Peers[Cell] {
+	peers := g.layout.PeersOf(position)
+
+	return Peers[Cell]{
+		Row:    g.iterCells(peers.Row),
+		Column: g.iterCells(peers.Column),
+		Block:  g.iterCells(peers.Block),
 	}
 }
 
@@ -79,4 +78,15 @@ func (g *Grid) Set(position Position, newCandidates Candidates) {
 
 	index := g.layout.RowMajorIndex(position)
 	g.cellCandidates[index] = newCandidates
+}
+
+func (g *Grid) iterCells(positions iter.Seq[Position]) iter.Seq[Cell] {
+	return func(yield func(Cell) bool) {
+		for position := range positions {
+			candidates := g.cellCandidates[g.layout.RowMajorIndex(position)]
+			if !yield(NewCell(position, candidates)) {
+				return
+			}
+		}
+	}
 }
