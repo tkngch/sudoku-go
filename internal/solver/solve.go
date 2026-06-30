@@ -1,33 +1,89 @@
 package solver
 
 import (
+	"container/list"
 	"errors"
 
 	"github.com/tkngch/sudoku-go/internal/puzzle"
 )
+
+type sudokuSolver struct {
+	grid               *puzzle.Grid
+	newlyRevealedCells *list.List
+}
 
 var ErrSolutionNotFound = errors.New("solution not found")
 
 // Solve returns a solved copy of the grid, or ErrSolutionNotFound if the grid
 // has no solution. The input grid is not modified.
 func Solve(grid *puzzle.Grid) (*puzzle.Grid, error) {
-	grid = grid.Clone() // do not mutate the input argument
-	dropAllInvalidCandidates(grid)
-
-	if isSolved(grid) {
-		return grid, nil
+	solver := sudokuSolver{
+		grid:               grid.Clone(),
+		newlyRevealedCells: list.New(),
 	}
 
-	return searchSolution(grid)
+	for cell := range solver.grid.Cells() {
+		if cell.Candidates().Count() == 1 {
+			solver.newlyRevealedCells.PushBack(cell)
+		}
+	}
+
+	ok := solver.eliminateInvalidCandidates()
+	if !ok {
+		return nil, ErrSolutionNotFound
+	}
+
+	if solver.isSolved() {
+		return solver.grid, nil
+	}
+
+	err := solver.searchSolution()
+	if err != nil {
+		return nil, ErrSolutionNotFound
+	}
+
+	return solver.grid, nil
 }
 
-func isSolved(grid *puzzle.Grid) bool {
-	for cell := range grid.Cells() {
+// eliminateInvalidCandidates propagates the values of the revealed cells to their
+// peers. It returns false when a peer left with no candidates.
+func (s sudokuSolver) eliminateInvalidCandidates() bool {
+	for revealed := s.newlyRevealedCells.Front(); revealed != nil; revealed = revealed.Next() {
+		cell, isCell := revealed.Value.(puzzle.Cell)
+		if !isCell {
+			continue
+		}
+
+		for peer := range s.grid.PeersOf(cell.Position()) {
+			reduced := peer.Candidates().Remove(cell.Candidates())
+			if reduced == peer.Candidates() {
+				continue
+			}
+
+			if reduced.Count() == 0 {
+				s.newlyRevealedCells = s.newlyRevealedCells.Init()
+
+				return false // contradiction — prune this branch
+			}
+
+			s.grid.Set(peer.Position(), reduced)
+
+			if reduced.Count() == 1 {
+				s.newlyRevealedCells.PushBack(puzzle.NewCell(peer.Position(), reduced))
+			}
+		}
+	}
+
+	return true
+}
+
+func (s sudokuSolver) isSolved() bool {
+	for cell := range s.grid.Cells() {
 		if cell.Candidates().Count() != 1 {
 			return false
 		}
 
-		for peer := range grid.PeersOf(cell.Position()) {
+		for peer := range s.grid.PeersOf(cell.Position()) {
 			if cell.Candidates() == peer.Candidates() {
 				return false
 			}
@@ -37,78 +93,44 @@ func isSolved(grid *puzzle.Grid) bool {
 	return true
 }
 
-// Mutate the grid to drop invalid candidates for all cells.
-func dropAllInvalidCandidates(grid *puzzle.Grid) {
-	for {
-		isAnyValueDropped := false
-
-		for cell := range grid.Cells() {
-			isDropped := dropInvalidCandidates(grid, cell)
-			isAnyValueDropped = isAnyValueDropped || isDropped
+func (s sudokuSolver) searchSolution() error {
+	cell, isFound := s.findUnfilledCell()
+	if !isFound {
+		if s.isSolved() {
+			return nil
 		}
 
-		if !isAnyValueDropped {
-			return
-		}
-	}
-}
-
-// Mutate the grid to drop invalid candidates for the cell.
-func dropInvalidCandidates(grid *puzzle.Grid, cell puzzle.Cell) bool {
-	invalidCandidates := puzzle.NewSingleCandidate(0)
-
-	for peer := range grid.PeersOf(cell.Position()) {
-		if peer.Candidates().Count() == 1 {
-			invalidCandidates = invalidCandidates.Union(peer.Candidates())
-		}
+		return ErrSolutionNotFound
 	}
 
-	newCandidates := cell.Candidates().Remove(invalidCandidates)
-	if cell.Candidates() != newCandidates {
-		grid.Set(cell.Position(), newCandidates)
-
-		return true
-	}
-
-	return false
-}
-
-func searchSolution(grid *puzzle.Grid) (*puzzle.Grid, error) {
-	// 1. Find the cell that has more than one candidates.
-	cell, isFound := findUnfilledCell(grid)
-	if !isFound && isSolved(grid) {
-		return grid, nil
-	} else if !isFound {
-		return grid, ErrSolutionNotFound
-	}
-
-	// 2. Pick one of its candidates and replace the cell
 	for value := range cell.Candidates().All() {
-		newGrid := grid.Clone()
-		newGrid.Set(cell.Position(), value)
+		current := s.grid
 
-		// 3. Update the peers and the others
-		dropAllInvalidCandidates(newGrid)
+		s.grid = current.Clone()
+		s.grid.Set(cell.Position(), value)
 
-		solved, err := searchSolution(newGrid)
-		if err == nil {
-			return solved, nil
-		} else if !errors.Is(err, ErrSolutionNotFound) {
-			return solved, err
+		ok := s.eliminateInvalidCandidates()
+		if ok {
+			err := s.searchSolution()
+			if err == nil {
+				return nil
+			}
 		}
+
+		s.grid = current
 	}
 
-	return grid, ErrSolutionNotFound
+	return ErrSolutionNotFound
 }
 
 // Find the cell that has the smallest number of candidates among the cells
 // which has more than one candidates.
-func findUnfilledCell(grid *puzzle.Grid) (puzzle.Cell, bool) {
+func (s sudokuSolver) findUnfilledCell() (puzzle.Cell, bool) {
 	isFound := false
 
 	var foundCell puzzle.Cell
 
-	for cell := range grid.Cells() {
+	for cell := range s.grid.Cells() {
 		count := cell.Candidates().Count()
 		switch count {
 		case 0: // search went down the path without solution. fail early.
