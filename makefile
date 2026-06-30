@@ -2,7 +2,7 @@ default: format vet lint test
 
 .PHONY: format
 format:
-	go fmt ./...
+	golangci-lint fmt ./...
 
 .PHONY: vet
 vet:
@@ -10,6 +10,7 @@ vet:
 
 .PHONY: lint
 lint:
+	gofmt -l .
 	golangci-lint run ./...
 
 .PHONY: test

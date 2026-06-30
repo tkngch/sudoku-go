@@ -8,6 +8,8 @@ import (
 )
 
 func TestPositionString(t *testing.T) {
+	t.Parallel()
+
 	pos := puzzle.NewPosition(3, 5)
 
 	assert.Contains(t, pos.String(), "3")

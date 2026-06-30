@@ -10,8 +10,10 @@ import (
 )
 
 func TestNewSingleCandidate(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
-		input    uint8
+		input    int
 		expected puzzle.Candidates
 	}{
 		{input: 0, expected: 0b0},
@@ -38,6 +40,7 @@ func TestNewSingleCandidate(t *testing.T) {
 		t.Run(
 			fmt.Sprintf("NewSingleCandidate(%d)", testCase.input),
 			func(t *testing.T) {
+				t.Parallel()
 				assert.Equal(t, testCase.expected, puzzle.NewSingleCandidate(testCase.input))
 			},
 		)
@@ -45,8 +48,10 @@ func TestNewSingleCandidate(t *testing.T) {
 }
 
 func TestNewCandidatesForRange(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
-		input    uint8
+		input    int
 		expected puzzle.Candidates
 	}{
 		{input: 0, expected: 0b0},
@@ -73,6 +78,7 @@ func TestNewCandidatesForRange(t *testing.T) {
 		t.Run(
 			fmt.Sprintf("NewCandidatesForRange(%d)", testCase.input),
 			func(t *testing.T) {
+				t.Parallel()
 				assert.Equal(t, testCase.expected, puzzle.NewCandidatesForRange(testCase.input))
 			},
 		)
@@ -80,6 +86,8 @@ func TestNewCandidatesForRange(t *testing.T) {
 }
 
 func TestCandidatesUnion(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name         string
 		initialValue puzzle.Candidates
@@ -110,10 +118,13 @@ func TestCandidatesUnion(t *testing.T) {
 		t.Run(
 			testCase.name,
 			func(t *testing.T) {
+				t.Parallel()
+
 				value := testCase.initialValue
 				for _, add := range testCase.adders {
 					value = value.Union(add)
 				}
+
 				assert.Equal(t, testCase.expected, value)
 			},
 		)
@@ -121,6 +132,8 @@ func TestCandidatesUnion(t *testing.T) {
 }
 
 func TestCandidatesRemove(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name         string
 		initialValue puzzle.Candidates
@@ -145,10 +158,13 @@ func TestCandidatesRemove(t *testing.T) {
 		t.Run(
 			testCase.name,
 			func(t *testing.T) {
+				t.Parallel()
+
 				value := testCase.initialValue
 				for _, sub := range testCase.substracters {
 					value = value.Remove(sub)
 				}
+
 				assert.Equal(t, testCase.expected, value)
 			},
 		)
@@ -156,6 +172,8 @@ func TestCandidatesRemove(t *testing.T) {
 }
 
 func TestCandidatesAll(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name     string
 		input    puzzle.Candidates
@@ -170,6 +188,8 @@ func TestCandidatesAll(t *testing.T) {
 		t.Run(
 			testCase.name,
 			func(t *testing.T) {
+				t.Parallel()
+
 				actual := slices.Collect(testCase.input.All())
 				assert.Equal(t, testCase.expected, actual)
 			},
@@ -178,6 +198,8 @@ func TestCandidatesAll(t *testing.T) {
 }
 
 func TestCandidatesString(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name     string
 		input    puzzle.Candidates
@@ -193,6 +215,8 @@ func TestCandidatesString(t *testing.T) {
 		t.Run(
 			testCase.name,
 			func(t *testing.T) {
+				t.Parallel()
+
 				assert.Equal(t, testCase.expected, testCase.input.String())
 			},
 		)
@@ -200,6 +224,8 @@ func TestCandidatesString(t *testing.T) {
 }
 
 func TestCandidatesCount(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name     string
 		input    puzzle.Candidates
@@ -214,6 +240,8 @@ func TestCandidatesCount(t *testing.T) {
 		t.Run(
 			testCase.name,
 			func(t *testing.T) {
+				t.Parallel()
+
 				assert.Equal(t, testCase.expected, testCase.input.Count())
 			},
 		)

@@ -8,6 +8,8 @@ import (
 )
 
 func TestNewCell(t *testing.T) {
+	t.Parallel()
+
 	position := puzzle.NewPosition(1, 2)
 	candidates := puzzle.NewSingleCandidate(5)
 	cell := puzzle.NewCell(position, candidates)

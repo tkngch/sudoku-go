@@ -10,6 +10,8 @@ import (
 )
 
 func TestParse(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name          string
 		input         string
@@ -52,10 +54,13 @@ func TestParse(t *testing.T) {
 		t.Run(
 			testCase.name,
 			func(t *testing.T) {
+				t.Parallel()
+
 				grid, err := puzzle.Parse(testCase.input)
 				if testCase.expectedError != nil {
 					require.ErrorIs(t, err, testCase.expectedError)
 				}
+
 				assert.Equal(t, testCase.expected, grid)
 			},
 		)
@@ -63,6 +68,8 @@ func TestParse(t *testing.T) {
 }
 
 func TestParseStringRoundTrip(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name  string
 		input string
@@ -77,6 +84,8 @@ func TestParseStringRoundTrip(t *testing.T) {
 		t.Run(
 			testCase.name,
 			func(t *testing.T) {
+				t.Parallel()
+
 				grid, err := puzzle.Parse(testCase.input)
 				require.NoError(t, err)
 				assert.Equal(t, testCase.input, grid.String())
@@ -86,15 +95,17 @@ func TestParseStringRoundTrip(t *testing.T) {
 }
 
 func TestGridRender(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name     string
-		grid     [][]uint8
+		grid     [][]int
 		layout   puzzle.Layout
 		expected string
 	}{
 		{
 			name: "4x4 grid, 2x2 blocks",
-			grid: [][]uint8{
+			grid: [][]int{
 				{1, 2, 3, 4},
 				{3, 4, 1, 2},
 				{4, 3, 2, 1},
@@ -112,7 +123,7 @@ func TestGridRender(t *testing.T) {
 		},
 		{
 			name: "6x6 grid, 2x3 blocks",
-			grid: [][]uint8{
+			grid: [][]int{
 				{0, 2, 3, 4, 5, 6},
 				{4, 5, 6, 1, 2, 3},
 				{2, 3, 1, 5, 6, 4},
@@ -135,7 +146,7 @@ func TestGridRender(t *testing.T) {
 		},
 		{
 			name:     "empty grid",
-			grid:     [][]uint8{},
+			grid:     [][]int{},
 			layout:   puzzle.Layout{},
 			expected: "",
 		},
@@ -145,6 +156,8 @@ func TestGridRender(t *testing.T) {
 		t.Run(
 			testCase.name,
 			func(t *testing.T) {
+				t.Parallel()
+
 				grid := newGrid(testCase.grid, testCase.layout)
 				assert.Equal(t, testCase.expected, grid.Render())
 			},
@@ -156,5 +169,6 @@ func Must[T any](val T, err error) T {
 	if err != nil {
 		panic(err)
 	}
+
 	return val
 }
