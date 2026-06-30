@@ -116,7 +116,14 @@ func TestSolve(t *testing.T) {
 				expected, err := puzzle.Parse(strings.Join(testCase.solution, ""))
 				require.NoErrorf(t, err, "could not parse [%v]", testCase.solution)
 
-				assert.Equalf(t, expected.String(), actual.String(), "expected\n%s\nactual\n%s", expected.Render(), actual.Render())
+				assert.Equalf(
+					t,
+					expected.String(),
+					actual.String(),
+					"expected\n%s\nactual\n%s",
+					expected.Render(),
+					actual.Render(),
+				)
 			},
 		)
 	}
