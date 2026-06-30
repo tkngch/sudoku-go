@@ -21,7 +21,7 @@ func Solve(grid *puzzle.Grid) (*puzzle.Grid, error) {
 		}
 	}
 
-	ok := eliminateInvalidCandidates(grid, knownCells)
+	ok := removeInvalidCandidates(grid, knownCells)
 	if !ok {
 		return nil, ErrSolutionNotFound
 	}
@@ -29,32 +29,23 @@ func Solve(grid *puzzle.Grid) (*puzzle.Grid, error) {
 	return searchSolution(grid)
 }
 
-// eliminateInvalidCandidates propagates the values of the revealed cells to their
+// removeInvalidCandidates propagates the values of the revealed cells to their
 // peers. It returns false when a peer left with no candidates.
-func eliminateInvalidCandidates(grid *puzzle.Grid, newlyRevealedCells []puzzle.Cell) bool {
+func removeInvalidCandidates(grid *puzzle.Grid, newlyRevealedCells []puzzle.Cell) bool {
 	for len(newlyRevealedCells) > 0 {
 		revealed := newlyRevealedCells[0]
 		newlyRevealedCells = newlyRevealedCells[1:]
 
-		for peer := range grid.PeersOf(revealed.Position()).All() {
-			reduced := peer.Candidates().Remove(revealed.Candidates())
-			if reduced == peer.Candidates() {
-				continue
+		changedCells := removeInvalidCandidatesFromPeers(grid, revealed)
+		for _, cell := range changedCells {
+			switch cell.Candidates().Count() {
+			case 0:
+				return false
+			case 1:
+				newlyRevealedCells = append(newlyRevealedCells, cell)
 			}
 
-			if reduced.Count() == 0 {
-				return false // contradiction — prune this branch
-			}
-
-			grid.Set(peer.Position(), reduced)
-
-			if reduced.Count() == 1 {
-				// a naked single is revealed
-				nakedCell := puzzle.NewCell(peer.Position(), reduced)
-				newlyRevealedCells = append(newlyRevealedCells, nakedCell)
-			}
-
-			hiddenSingles, ok := revealHiddenSingles(grid, peer.Position(), revealed.Candidates())
+			hiddenSingles, ok := revealHiddenSingles(grid, cell.Position(), revealed.Candidates())
 			if !ok {
 				return false
 			}
@@ -64,6 +55,26 @@ func eliminateInvalidCandidates(grid *puzzle.Grid, newlyRevealedCells []puzzle.C
 	}
 
 	return true
+}
+
+// removeInvalidCandidatesFromPeers removes revealed's value from revealed's
+// peers. It returns the peers whose candidate values have changed. ended up
+// with a single candidate (naked singles) and the peers whose candidates
+// changed.
+func removeInvalidCandidatesFromPeers(grid *puzzle.Grid, revealed puzzle.Cell) []puzzle.Cell {
+	changed := make([]puzzle.Cell, 0)
+
+	for peer := range grid.PeersOf(revealed.Position()).All() {
+		reduced := peer.Candidates().Remove(revealed.Candidates())
+		if reduced == peer.Candidates() {
+			continue
+		}
+
+		grid.Set(peer.Position(), reduced)
+		changed = append(changed, puzzle.NewCell(peer.Position(), reduced))
+	}
+
+	return changed
 }
 
 // After a candidate value is eliminated from the position, this eliminated
@@ -124,7 +135,7 @@ func searchSolution(grid *puzzle.Grid) (*puzzle.Grid, error) {
 		newGrid := grid.Clone()
 		newGrid.Set(cell.Position(), value)
 
-		ok := eliminateInvalidCandidates(
+		ok := removeInvalidCandidates(
 			newGrid,
 			[]puzzle.Cell{puzzle.NewCell(cell.Position(), value)},
 		)

@@ -1,7 +1,6 @@
 package puzzle_test
 
 import (
-	"iter"
 	"slices"
 	"testing"
 
@@ -152,61 +151,57 @@ func TestLayoutPeersOf(t *testing.T) {
 			name:      "4x4 corner (0,0)",
 			cellCount: 16,
 			pos:       puzzle.NewPosition(0, 0),
-			expected: puzzle.Peers[puzzle.Position]{
-				Row: sequence(
+			expected: puzzle.NewPeers[puzzle.Position](
+				[]puzzle.Position{
 					puzzle.NewPosition(0, 1),
 					puzzle.NewPosition(0, 2),
 					puzzle.NewPosition(0, 3),
-				),
-				Column: sequence(
+				},
+				[]puzzle.Position{
 					puzzle.NewPosition(1, 0),
 					puzzle.NewPosition(2, 0),
 					puzzle.NewPosition(3, 0),
-				),
-				Block: sequence(
+				},
+				[]puzzle.Position{
 					puzzle.NewPosition(0, 1),
 					puzzle.NewPosition(1, 0),
 					puzzle.NewPosition(1, 1),
-				),
-			},
+				},
+			),
 		},
 		{
 			name:      "6x6 with 2x3 block (2,2)",
 			cellCount: 36,
 			pos:       puzzle.NewPosition(2, 2),
-			expected: puzzle.Peers[puzzle.Position]{
-				Row: sequence(
+			expected: puzzle.NewPeers[puzzle.Position](
+				[]puzzle.Position{
 					puzzle.NewPosition(2, 0),
 					puzzle.NewPosition(2, 1),
 					puzzle.NewPosition(2, 3),
 					puzzle.NewPosition(2, 4),
 					puzzle.NewPosition(2, 5),
-				),
-				Column: sequence(
+				},
+				[]puzzle.Position{
 					puzzle.NewPosition(0, 2),
 					puzzle.NewPosition(1, 2),
 					puzzle.NewPosition(3, 2),
 					puzzle.NewPosition(4, 2),
 					puzzle.NewPosition(5, 2),
-				),
-				Block: sequence(
+				},
+				[]puzzle.Position{
 					puzzle.NewPosition(2, 0),
 					puzzle.NewPosition(2, 1),
 					puzzle.NewPosition(3, 2),
 					puzzle.NewPosition(3, 0),
 					puzzle.NewPosition(3, 1),
-				),
-			},
+				},
+			),
 		},
 		{
 			name:      "4x4 outside the grid",
 			cellCount: 16,
 			pos:       puzzle.NewPosition(0, 4),
-			expected: puzzle.Peers[puzzle.Position]{
-				Row:    sequence(),
-				Column: sequence(),
-				Block:  sequence(),
-			},
+			expected:  puzzle.NewEmptyPeers[puzzle.Position](),
 		},
 	}
 
@@ -222,33 +217,23 @@ func TestLayoutPeersOf(t *testing.T) {
 				peers := layout.PeersOf(testCase.pos)
 				assert.ElementsMatch(
 					t,
-					slices.Collect(testCase.expected.Row),
-					slices.Collect(peers.Row),
+					slices.Collect(testCase.expected.Row()),
+					slices.Collect(peers.Row()),
 					"row peers",
 				)
 				assert.ElementsMatch(
 					t,
-					slices.Collect(testCase.expected.Column),
-					slices.Collect(peers.Column),
+					slices.Collect(testCase.expected.Col()),
+					slices.Collect(peers.Col()),
 					"column peers",
 				)
 				assert.ElementsMatch(
 					t,
-					slices.Collect(testCase.expected.Block),
-					slices.Collect(peers.Block),
+					slices.Collect(testCase.expected.Block()),
+					slices.Collect(peers.Block()),
 					"block peers",
 				)
 			},
 		)
-	}
-}
-
-func sequence(positions ...puzzle.Position) iter.Seq[puzzle.Position] {
-	return func(yield func(puzzle.Position) bool) {
-		for _, position := range positions {
-			if !yield(position) {
-				return
-			}
-		}
 	}
 }

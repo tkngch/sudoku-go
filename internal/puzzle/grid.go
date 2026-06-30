@@ -42,9 +42,9 @@ func (g *Grid) PeersOf(position Position) Peers[Cell] {
 	peers := g.layout.PeersOf(position)
 
 	return Peers[Cell]{
-		Row:    g.iterCells(peers.Row),
-		Column: g.iterCells(peers.Column),
-		Block:  g.iterCells(peers.Block),
+		row:    g.cells(peers.Row()),
+		column: g.cells(peers.Col()),
+		block:  g.cells(peers.Block()),
 	}
 }
 
@@ -80,13 +80,13 @@ func (g *Grid) Set(position Position, newCandidates Candidates) {
 	g.cellCandidates[index] = newCandidates
 }
 
-func (g *Grid) iterCells(positions iter.Seq[Position]) iter.Seq[Cell] {
-	return func(yield func(Cell) bool) {
-		for position := range positions {
-			candidates := g.cellCandidates[g.layout.RowMajorIndex(position)]
-			if !yield(NewCell(position, candidates)) {
-				return
-			}
-		}
+func (g *Grid) cells(positions iter.Seq[Position]) []Cell {
+	cells := make([]Cell, 0)
+
+	for position := range positions {
+		candidates := g.cellCandidates[g.layout.RowMajorIndex(position)]
+		cells = append(cells, NewCell(position, candidates))
 	}
+
+	return cells
 }
