@@ -41,11 +41,7 @@ func NewGrid(cells []Candidates, layout Layout) (*Grid, error) {
 func (g *Grid) PeersOf(position Position) Peers[Cell] {
 	peers := g.layout.PeersOf(position)
 
-	return Peers[Cell]{
-		row:    g.cells(peers.Row()),
-		column: g.cells(peers.Col()),
-		block:  g.cells(peers.Block()),
-	}
+	return NewPeers(g.cells(peers.Row()), g.cells(peers.Col()), g.cells(peers.Block()))
 }
 
 func (g *Grid) Cells() iter.Seq[Cell] {
