@@ -15,8 +15,8 @@ var (
 // has no solution, or ErrInvalidGrid if the grid is nil. The input grid is not
 // modified.
 //
-// When a puzzle admits more than one solution, Solve returns one of them (the
-// first its search reaches); it does not detect or report non-uniqueness.
+// When a puzzle admits more than one solution, Solve returns one of them and
+// does not detect or report non-uniqueness.
 func Solve(grid *puzzle.Grid) (*puzzle.Grid, error) {
 	if grid == nil {
 		return nil, ErrInvalidGrid
@@ -27,7 +27,14 @@ func Solve(grid *puzzle.Grid) (*puzzle.Grid, error) {
 	knownCells := make([]puzzle.Cell, 0)
 
 	for cell := range grid.Cells() {
-		if cell.Candidates().Count() == 1 {
+		switch cell.Candidates().Count() {
+		case 0:
+			// A cell with no candidates cannot hold any value, so the grid must
+			// be malformed not just unsolvable. Outputs from Parse never reach
+			// here, but a Grid built directly via NewGrid can.
+			return nil, ErrInvalidGrid
+
+		case 1:
 			knownCells = append(knownCells, cell)
 		}
 	}
