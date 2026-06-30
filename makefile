@@ -3,6 +3,7 @@ default: format vet lint test
 .PHONY: format
 format:
 	golangci-lint fmt ./...
+	golangci-lint run --fix ./...
 
 .PHONY: vet
 vet:
