@@ -122,7 +122,7 @@ func revealHiddenSingles(
 }
 
 func searchSolution(grid *puzzle.Grid) (*puzzle.Grid, error) {
-	cell, isFound := unfilledCell(grid)
+	cell, isFound := unfilledCellWithFewestCandidates(grid)
 	if !isFound {
 		if isSolved(grid) {
 			return grid, nil
@@ -150,9 +150,9 @@ func searchSolution(grid *puzzle.Grid) (*puzzle.Grid, error) {
 	return nil, ErrSolutionNotFound
 }
 
-// unfilledCell finds the cell that has the smallest number of candidates
-// among the cells which has more than one candidates.
-func unfilledCell(grid *puzzle.Grid) (puzzle.Cell, bool) {
+// unfilledCellWithFewestCandidates finds the cell that has the smallest number
+// of candidates among the cells which has more than one candidates.
+func unfilledCellWithFewestCandidates(grid *puzzle.Grid) (puzzle.Cell, bool) {
 	isFound := false
 
 	var foundCell puzzle.Cell
