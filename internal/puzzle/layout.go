@@ -43,7 +43,7 @@ func newLayout(r, c int) Layout {
 	return l
 }
 
-// GridSize returns the number of rows or columns in a grid. A grid is a
+// GridSize returns the number of rows or columns in a grid. A grid is
 // square-shaped, so its number of rows equals to its number of columns.
 func (l Layout) GridSize() int { return l.blockRowCount * l.blockColCount }
 

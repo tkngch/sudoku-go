@@ -145,7 +145,7 @@ func TestGridPeersOf(t *testing.T) {
 				puzzle.NewPosition(0, 1), // row and block
 				puzzle.NewPosition(0, 2), // row
 				puzzle.NewPosition(0, 3), // row
-				puzzle.NewPosition(1, 0), // colum and block
+				puzzle.NewPosition(1, 0), // column and block
 				puzzle.NewPosition(2, 0), // column
 				puzzle.NewPosition(3, 0), // column
 				puzzle.NewPosition(1, 1), // block
