@@ -1,75 +1,67 @@
 package solver
 
 import (
-	"container/list"
 	"errors"
 
 	"github.com/tkngch/sudoku-go/internal/puzzle"
 )
-
-type sudokuSolver struct {
-	grid               *puzzle.Grid
-	newlyRevealedCells *list.List
-}
 
 var ErrSolutionNotFound = errors.New("solution not found")
 
 // Solve returns a solved copy of the grid, or ErrSolutionNotFound if the grid
 // has no solution. The input grid is not modified.
 func Solve(grid *puzzle.Grid) (*puzzle.Grid, error) {
-	solver := sudokuSolver{
-		grid:               grid.Clone(),
-		newlyRevealedCells: list.New(),
-	}
+	grid = grid.Clone()
 
-	for cell := range solver.grid.Cells() {
+	knownCells := make([]puzzle.Cell, 0)
+
+	for cell := range grid.Cells() {
 		if cell.Candidates().Count() == 1 {
-			solver.newlyRevealedCells.PushBack(cell)
+			knownCells = append(knownCells, cell)
 		}
 	}
 
-	ok := solver.eliminateInvalidCandidates()
+	ok := eliminateInvalidCandidates(grid, knownCells)
 	if !ok {
 		return nil, ErrSolutionNotFound
 	}
 
-	if solver.isSolved() {
-		return solver.grid, nil
+	if isSolved(grid) {
+		return grid, nil
 	}
 
-	err := solver.searchSolution()
+	solution, err := searchSolution(grid)
 	if err != nil {
 		return nil, ErrSolutionNotFound
 	}
 
-	return solver.grid, nil
+	return solution, nil
 }
 
 // eliminateInvalidCandidates propagates the values of the revealed cells to their
 // peers. It returns false when a peer left with no candidates.
-func (s sudokuSolver) eliminateInvalidCandidates() bool {
-	for revealed := s.newlyRevealedCells.Front(); revealed != nil; revealed = revealed.Next() {
-		cell, isCell := revealed.Value.(puzzle.Cell)
-		if !isCell {
-			continue
-		}
+func eliminateInvalidCandidates(grid *puzzle.Grid, newlyRevealedCells []puzzle.Cell) bool {
+	for len(newlyRevealedCells) > 0 {
+		revealed := newlyRevealedCells[0]
+		newlyRevealedCells = newlyRevealedCells[1:]
 
-		for peer := range s.grid.PeersOf(cell.Position()) {
-			reduced := peer.Candidates().Remove(cell.Candidates())
+		for peer := range grid.PeersOf(revealed.Position()) {
+			reduced := peer.Candidates().Remove(revealed.Candidates())
 			if reduced == peer.Candidates() {
 				continue
 			}
 
 			if reduced.Count() == 0 {
-				s.newlyRevealedCells = s.newlyRevealedCells.Init()
-
 				return false // contradiction — prune this branch
 			}
 
-			s.grid.Set(peer.Position(), reduced)
+			grid.Set(peer.Position(), reduced)
 
 			if reduced.Count() == 1 {
-				s.newlyRevealedCells.PushBack(puzzle.NewCell(peer.Position(), reduced))
+				newlyRevealedCells = append(
+					newlyRevealedCells,
+					puzzle.NewCell(peer.Position(), reduced),
+				)
 			}
 		}
 	}
@@ -77,13 +69,13 @@ func (s sudokuSolver) eliminateInvalidCandidates() bool {
 	return true
 }
 
-func (s sudokuSolver) isSolved() bool {
-	for cell := range s.grid.Cells() {
+func isSolved(grid *puzzle.Grid) bool {
+	for cell := range grid.Cells() {
 		if cell.Candidates().Count() != 1 {
 			return false
 		}
 
-		for peer := range s.grid.PeersOf(cell.Position()) {
+		for peer := range grid.PeersOf(cell.Position()) {
 			if cell.Candidates() == peer.Candidates() {
 				return false
 			}
@@ -93,44 +85,43 @@ func (s sudokuSolver) isSolved() bool {
 	return true
 }
 
-func (s sudokuSolver) searchSolution() error {
-	cell, isFound := s.findUnfilledCell()
+func searchSolution(grid *puzzle.Grid) (*puzzle.Grid, error) {
+	cell, isFound := findUnfilledCell(grid)
 	if !isFound {
-		if s.isSolved() {
-			return nil
+		if isSolved(grid) {
+			return grid, nil
 		}
 
-		return ErrSolutionNotFound
+		return nil, ErrSolutionNotFound
 	}
 
 	for value := range cell.Candidates().All() {
-		current := s.grid
+		newGrid := grid.Clone()
+		newGrid.Set(cell.Position(), value)
 
-		s.grid = current.Clone()
-		s.grid.Set(cell.Position(), value)
-
-		ok := s.eliminateInvalidCandidates()
+		ok := eliminateInvalidCandidates(
+			newGrid,
+			[]puzzle.Cell{puzzle.NewCell(cell.Position(), value)},
+		)
 		if ok {
-			err := s.searchSolution()
+			solution, err := searchSolution(newGrid)
 			if err == nil {
-				return nil
+				return solution, nil
 			}
 		}
-
-		s.grid = current
 	}
 
-	return ErrSolutionNotFound
+	return nil, ErrSolutionNotFound
 }
 
 // Find the cell that has the smallest number of candidates among the cells
 // which has more than one candidates.
-func (s sudokuSolver) findUnfilledCell() (puzzle.Cell, bool) {
+func findUnfilledCell(grid *puzzle.Grid) (puzzle.Cell, bool) {
 	isFound := false
 
 	var foundCell puzzle.Cell
 
-	for cell := range s.grid.Cells() {
+	for cell := range grid.Cells() {
 		count := cell.Candidates().Count()
 		switch count {
 		case 0: // search went down the path without solution. fail early.
