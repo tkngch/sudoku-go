@@ -36,12 +36,26 @@ func NewGrid(cells []Candidates, layout Layout) (*Grid, error) {
 	return &grid, nil
 }
 
-// PeersOf returns an iterator over the cells that share a row, column, or block
-// with position, excluding the cell at position itself.
-func (g *Grid) PeersOf(position Position) Peers[Cell] {
+// EachPeersOf returns an array of iterators over the cells that share a row,
+// column, or block with the provided position.
+func (g *Grid) EachPeersOf(position Position) [3]iter.Seq[Cell] {
 	peers := g.layout.PeersOf(position)
 
-	return NewPeers(g.cells(peers.Row()), g.cells(peers.Col()), g.cells(peers.Block()))
+	return [3]iter.Seq[Cell]{
+		g.cellsAt(peers.Row()),
+		g.cellsAt(peers.Col()),
+		g.cellsAt(peers.Block()),
+	}
+}
+
+func (g *Grid) AllPeersOf(position Position) iter.Seq[Cell] {
+	return func(yield func(Cell) bool) {
+		for peer := range g.layout.PeersOf(position).All() {
+			if !yield(g.cellAt(peer)) {
+				return
+			}
+		}
+	}
 }
 
 func (g *Grid) Cells() iter.Seq[Cell] {
@@ -76,13 +90,18 @@ func (g *Grid) Set(position Position, newCandidates Candidates) {
 	g.cellCandidates[index] = newCandidates
 }
 
-func (g *Grid) cells(positions iter.Seq[Position]) []Cell {
-	cells := make([]Cell, 0)
+func (g *Grid) cellAt(position Position) Cell {
+	candidates := g.cellCandidates[g.layout.RowMajorIndex(position)]
 
-	for position := range positions {
-		candidates := g.cellCandidates[g.layout.RowMajorIndex(position)]
-		cells = append(cells, NewCell(position, candidates))
+	return NewCell(position, candidates)
+}
+
+func (g *Grid) cellsAt(positions iter.Seq[Position]) iter.Seq[Cell] {
+	return func(yield func(Cell) bool) {
+		for position := range positions {
+			if !yield(g.cellAt(position)) {
+				return
+			}
+		}
 	}
-
-	return cells
 }

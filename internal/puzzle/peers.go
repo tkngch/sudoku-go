@@ -5,21 +5,21 @@ import (
 	"slices"
 )
 
-type Peers[T comparable] struct {
-	row      []T
-	column   []T
-	block    []T
-	allPeers []T
+type Peers struct {
+	row      []Position
+	column   []Position
+	block    []Position
+	allPeers []Position
 }
 
-func NewEmptyPeers[T comparable]() Peers[T] {
-	return NewPeers([]T{}, []T{}, []T{})
+func NewEmptyPeers() Peers {
+	return NewPeers([]Position{}, []Position{}, []Position{})
 }
 
-func NewPeers[T comparable](rowPeers, colPeers, blockPeers []T) Peers[T] {
-	allPeers := make([]T, 0, len(rowPeers)+len(colPeers)+len(blockPeers))
+func NewPeers(rowPeers, colPeers, blockPeers []Position) Peers {
+	allPeers := make([]Position, 0, len(rowPeers)+len(colPeers)+len(blockPeers))
 
-	included := make(map[T]bool)
+	included := make(map[Position]bool)
 	for _, item := range slices.Concat(rowPeers, colPeers, blockPeers) {
 		if _, isIncluded := included[item]; isIncluded {
 			continue
@@ -29,7 +29,7 @@ func NewPeers[T comparable](rowPeers, colPeers, blockPeers []T) Peers[T] {
 		included[item] = true
 	}
 
-	return Peers[T]{
+	return Peers{
 		row:      slices.Clone(rowPeers),
 		column:   slices.Clone(colPeers),
 		block:    slices.Clone(blockPeers),
@@ -39,25 +39,25 @@ func NewPeers[T comparable](rowPeers, colPeers, blockPeers []T) Peers[T] {
 
 // All returns a single iterator over the peers. Duplicates are removed from the
 // three peers (row, column, and block).
-func (p Peers[T]) All() iter.Seq[T] {
+func (p Peers) All() iter.Seq[Position] {
 	return slices.Values(p.allPeers)
 }
 
 // Each returns an array of iterators. The first provides the peers by row, the
 // second provides the peers by column, and the third provides the peers by
 // block.
-func (p Peers[T]) Each() [3]iter.Seq[T] {
-	return [3]iter.Seq[T]{p.Row(), p.Col(), p.Block()}
+func (p Peers) Each() [3]iter.Seq[Position] {
+	return [3]iter.Seq[Position]{p.Row(), p.Col(), p.Block()}
 }
 
-func (p Peers[T]) Row() iter.Seq[T] {
+func (p Peers) Row() iter.Seq[Position] {
 	return slices.Values(p.row)
 }
 
-func (p Peers[T]) Col() iter.Seq[T] {
+func (p Peers) Col() iter.Seq[Position] {
 	return slices.Values(p.column)
 }
 
-func (p Peers[T]) Block() iter.Seq[T] {
+func (p Peers) Block() iter.Seq[Position] {
 	return slices.Values(p.block)
 }

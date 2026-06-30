@@ -62,7 +62,7 @@ func removeInvalidCandidates(grid *puzzle.Grid, newlyRevealedCells []puzzle.Cell
 func removeInvalidCandidatesFromPeers(grid *puzzle.Grid, revealed puzzle.Cell) []puzzle.Cell {
 	changed := make([]puzzle.Cell, 0)
 
-	for peer := range grid.PeersOf(revealed.Position()).All() {
+	for peer := range grid.AllPeersOf(revealed.Position()) {
 		reduced := peer.Candidates().Remove(revealed.Candidates())
 		if reduced == peer.Candidates() {
 			continue
@@ -86,11 +86,15 @@ func revealHiddenSingles(
 ) ([]puzzle.Cell, bool) {
 	hiddenSingles := make([]puzzle.Cell, 0)
 	if eliminatedCandidates.Count() != 1 {
+		// Unreachable in practice: callers only pass the candidate value of
+		// revealed cell, which has only one candidate value. This defensive
+		// guard is here to highlight the assumption that the eliminated
+		// candidates only have one value.
 		return hiddenSingles, true
 	}
 
 	cellsWithEliminatedCandidates := make([]puzzle.Cell, 0)
-	for _, peers := range grid.PeersOf(position).Each() {
+	for _, peers := range grid.EachPeersOf(position) {
 		cellsWithEliminatedCandidates = cellsWithEliminatedCandidates[:0]
 
 		for peer := range peers {
@@ -101,16 +105,22 @@ func revealHiddenSingles(
 
 		switch len(cellsWithEliminatedCandidates) {
 		case 0:
-			// None of the peers can take the eliminate value, so the value
+			// None of the peers can take the eliminated value, so the value
 			// should not have been eliminated.
 			return nil, false
 
 		case 1:
-			grid.Set(cellsWithEliminatedCandidates[0].Position(), eliminatedCandidates)
-			hiddenSingles = append(
-				hiddenSingles,
-				puzzle.NewCell(cellsWithEliminatedCandidates[0].Position(), eliminatedCandidates),
-			)
+			// Skip the cell which has only the eliminated value as its candidate values.
+			if cellsWithEliminatedCandidates[0].Candidates() != eliminatedCandidates {
+				grid.Set(cellsWithEliminatedCandidates[0].Position(), eliminatedCandidates)
+				hiddenSingles = append(
+					hiddenSingles,
+					puzzle.NewCell(
+						cellsWithEliminatedCandidates[0].Position(),
+						eliminatedCandidates,
+					),
+				)
+			}
 
 		default:
 		}
@@ -149,7 +159,7 @@ func searchSolution(grid *puzzle.Grid) (*puzzle.Grid, error) {
 }
 
 // unfilledCellWithFewestCandidates finds the cell that has the smallest number
-// of candidates among the cells which has more than one candidates.
+// of candidates among the cells which have more than one candidates.
 func unfilledCellWithFewestCandidates(grid *puzzle.Grid) (puzzle.Cell, bool) {
 	isFound := false
 
@@ -158,7 +168,9 @@ func unfilledCellWithFewestCandidates(grid *puzzle.Grid) (puzzle.Cell, bool) {
 	for cell := range grid.Cells() {
 		count := cell.Candidates().Count()
 		switch count {
-		case 0: // search went down the path without solution. fail early.
+		case 0:
+			// Unreachable in practice: callers only pass grids that survived
+			// removeInvalidCandidates, which rejects any grid with an empty cell.
 			return foundCell, false
 		case 1:
 			continue
@@ -181,7 +193,7 @@ func isSolved(grid *puzzle.Grid) bool {
 			return false
 		}
 
-		for peer := range grid.PeersOf(cell.Position()).All() {
+		for peer := range grid.AllPeersOf(cell.Position()) {
 			if cell.Candidates() == peer.Candidates() {
 				return false
 			}

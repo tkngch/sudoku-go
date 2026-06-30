@@ -12,9 +12,7 @@ import (
 // goroutines.
 type Layout struct {
 	blockRowCount, blockColCount int
-	rowPeers                     [][]Position
-	colPeers                     [][]Position
-	blockPeers                   [][]Position
+	peers                        []Peers
 }
 
 var ErrInvalidCellCount = errors.New("invalid cell count")
@@ -39,7 +37,7 @@ func NewLayoutFromCellCount(cellCount int) (Layout, error) {
 
 func newLayout(r, c int) Layout {
 	l := Layout{blockRowCount: r, blockColCount: c}
-	l.rowPeers, l.colPeers, l.blockPeers = l.allPeers()
+	l.peers = l.allPeers()
 
 	return l
 }
@@ -53,16 +51,12 @@ func (l Layout) CellCount() int { return l.GridSize() * l.GridSize() }
 // PeersOf returns iterators over the precomputed peers. A peer shares the row,
 // the column or the group with the provided position. When the provided
 // position is off the grid, PeersOf returns empty iterators.
-func (l Layout) PeersOf(position Position) Peers[Position] {
+func (l Layout) PeersOf(position Position) Peers {
 	if !l.IsOnGrid(position) {
-		return NewEmptyPeers[Position]()
+		return NewEmptyPeers()
 	}
 
-	return NewPeers[Position](
-		l.rowPeers[l.RowMajorIndex(position)],
-		l.colPeers[l.RowMajorIndex(position)],
-		l.blockPeers[l.RowMajorIndex(position)],
-	)
+	return l.peers[l.RowMajorIndex(position)]
 }
 
 func (l Layout) IsOnGrid(position Position) bool {
@@ -97,20 +91,17 @@ func (l Layout) String() string {
 	)
 }
 
-func (l Layout) allPeers() ([][]Position, [][]Position, [][]Position) {
+func (l Layout) allPeers() []Peers {
 	rowPeerCount := l.GridSize() - 1
 	colPeerCount := l.GridSize() - 1
 	blockPeerCount := l.blockRowCount*l.blockColCount - 1
 
-	rowPeers := make([][]Position, l.CellCount())
-	colPeers := make([][]Position, l.CellCount())
-	blockPeers := make([][]Position, l.CellCount())
+	allPeers := make([]Peers, l.CellCount())
 
 	for this := range l.allPositions() {
-		index := l.RowMajorIndex(this)
-		rowPeers[index] = make([]Position, 0, rowPeerCount)
-		colPeers[index] = make([]Position, 0, colPeerCount)
-		blockPeers[index] = make([]Position, 0, blockPeerCount)
+		rowPeers := make([]Position, 0, rowPeerCount)
+		colPeers := make([]Position, 0, colPeerCount)
+		blockPeers := make([]Position, 0, blockPeerCount)
 
 		for that := range l.allPositions() {
 			if this == that {
@@ -118,20 +109,22 @@ func (l Layout) allPeers() ([][]Position, [][]Position, [][]Position) {
 			}
 
 			if this.row == that.row {
-				rowPeers[index] = append(rowPeers[index], that)
+				rowPeers = append(rowPeers, that)
 			}
 
 			if this.col == that.col {
-				colPeers[index] = append(colPeers[index], that)
+				colPeers = append(colPeers, that)
 			}
 
 			if l.areInSameBlock(this, that) {
-				blockPeers[index] = append(blockPeers[index], that)
+				blockPeers = append(blockPeers, that)
 			}
 		}
+
+		allPeers[l.RowMajorIndex(this)] = NewPeers(rowPeers, colPeers, blockPeers)
 	}
 
-	return rowPeers, colPeers, blockPeers
+	return allPeers
 }
 
 func (l Layout) allPositions() iter.Seq[Position] {

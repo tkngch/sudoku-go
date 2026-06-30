@@ -145,13 +145,13 @@ func TestLayoutPeersOf(t *testing.T) {
 		name      string
 		cellCount int
 		pos       puzzle.Position
-		expected  puzzle.Peers[puzzle.Position]
+		expected  puzzle.Peers
 	}{
 		{
 			name:      "4x4 corner (0,0)",
 			cellCount: 16,
 			pos:       puzzle.NewPosition(0, 0),
-			expected: puzzle.NewPeers[puzzle.Position](
+			expected: puzzle.NewPeers(
 				[]puzzle.Position{
 					puzzle.NewPosition(0, 1),
 					puzzle.NewPosition(0, 2),
@@ -173,7 +173,7 @@ func TestLayoutPeersOf(t *testing.T) {
 			name:      "6x6 with 2x3 block (2,2)",
 			cellCount: 36,
 			pos:       puzzle.NewPosition(2, 2),
-			expected: puzzle.NewPeers[puzzle.Position](
+			expected: puzzle.NewPeers(
 				[]puzzle.Position{
 					puzzle.NewPosition(2, 0),
 					puzzle.NewPosition(2, 1),
@@ -201,7 +201,7 @@ func TestLayoutPeersOf(t *testing.T) {
 			name:      "4x4 outside the grid",
 			cellCount: 16,
 			pos:       puzzle.NewPosition(0, 4),
-			expected:  puzzle.NewEmptyPeers[puzzle.Position](),
+			expected:  puzzle.NewEmptyPeers(),
 		},
 	}
 
