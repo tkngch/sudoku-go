@@ -58,9 +58,7 @@ func removeInvalidCandidates(grid *puzzle.Grid, newlyRevealedCells []puzzle.Cell
 }
 
 // removeInvalidCandidatesFromPeers removes revealed's value from revealed's
-// peers. It returns the peers whose candidate values have changed. ended up
-// with a single candidate (naked singles) and the peers whose candidates
-// changed.
+// peers. It returns the peers whose candidate values have changed.
 func removeInvalidCandidatesFromPeers(grid *puzzle.Grid, revealed puzzle.Cell) []puzzle.Cell {
 	changed := make([]puzzle.Cell, 0)
 
