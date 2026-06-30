@@ -13,16 +13,15 @@ func TestNewLayoutFromCellCount(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
-		name              string
-		input             int
-		expectedError     error
-		expectedGridSize  int
-		expectedPeerCount int
+		name             string
+		input            int
+		expectedError    error
+		expectedGridSize int
 	}{
-		{name: "16 cells", input: 16, expectedGridSize: 4, expectedPeerCount: 7},
-		{name: "36 cells", input: 36, expectedGridSize: 6, expectedPeerCount: 12},
-		{name: "81 cells", input: 81, expectedGridSize: 9, expectedPeerCount: 20},
-		{name: "144 cells", input: 144, expectedGridSize: 12, expectedPeerCount: 28},
+		{name: "16 cells", input: 16, expectedGridSize: 4},
+		{name: "36 cells", input: 36, expectedGridSize: 6},
+		{name: "81 cells", input: 81, expectedGridSize: 9},
+		{name: "144 cells", input: 144, expectedGridSize: 12},
 		{name: "zero", input: 0, expectedError: puzzle.ErrInvalidCellCount},
 		{name: "255", input: 255, expectedError: puzzle.ErrInvalidCellCount},
 	}
@@ -43,11 +42,8 @@ func TestNewLayoutFromCellCount(t *testing.T) {
 					return
 				}
 
-				peers := slices.Collect(layout.PeersOf(puzzle.NewPosition(0, 0)))
-
 				require.NoError(t, err)
 				assert.Equal(t, testCase.expectedGridSize, layout.GridSize())
-				assert.Len(t, peers, testCase.expectedPeerCount)
 			},
 		)
 	}
@@ -134,8 +130,109 @@ func TestLayoutRowMajorIndex(t *testing.T) {
 			func(t *testing.T) {
 				t.Parallel()
 
-				layout := Must(puzzle.NewLayoutFromCellCount(testCase.cellCount))
+				layout, err := puzzle.NewLayoutFromCellCount(testCase.cellCount)
+				require.NoError(t, err)
 				assert.Equal(t, testCase.expected, layout.RowMajorIndex(testCase.position))
+			},
+		)
+	}
+}
+
+func TestLayoutPeersOf(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		name      string
+		cellCount int
+		pos       puzzle.Position
+		expected  puzzle.Peers
+	}{
+		{
+			name:      "4x4 corner (0,0)",
+			cellCount: 16,
+			pos:       puzzle.NewPosition(0, 0),
+			expected: puzzle.NewPeers(
+				[]puzzle.Position{
+					puzzle.NewPosition(0, 1),
+					puzzle.NewPosition(0, 2),
+					puzzle.NewPosition(0, 3),
+				},
+				[]puzzle.Position{
+					puzzle.NewPosition(1, 0),
+					puzzle.NewPosition(2, 0),
+					puzzle.NewPosition(3, 0),
+				},
+				[]puzzle.Position{
+					puzzle.NewPosition(0, 1),
+					puzzle.NewPosition(1, 0),
+					puzzle.NewPosition(1, 1),
+				},
+			),
+		},
+		{
+			name:      "6x6 with 2x3 block (2,2)",
+			cellCount: 36,
+			pos:       puzzle.NewPosition(2, 2),
+			expected: puzzle.NewPeers(
+				[]puzzle.Position{
+					puzzle.NewPosition(2, 0),
+					puzzle.NewPosition(2, 1),
+					puzzle.NewPosition(2, 3),
+					puzzle.NewPosition(2, 4),
+					puzzle.NewPosition(2, 5),
+				},
+				[]puzzle.Position{
+					puzzle.NewPosition(0, 2),
+					puzzle.NewPosition(1, 2),
+					puzzle.NewPosition(3, 2),
+					puzzle.NewPosition(4, 2),
+					puzzle.NewPosition(5, 2),
+				},
+				[]puzzle.Position{
+					puzzle.NewPosition(2, 0),
+					puzzle.NewPosition(2, 1),
+					puzzle.NewPosition(3, 2),
+					puzzle.NewPosition(3, 0),
+					puzzle.NewPosition(3, 1),
+				},
+			),
+		},
+		{
+			name:      "4x4 outside the grid",
+			cellCount: 16,
+			pos:       puzzle.NewPosition(0, 4),
+			expected:  puzzle.NewEmptyPeers(),
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(
+			testCase.name,
+			func(t *testing.T) {
+				t.Parallel()
+
+				layout, err := puzzle.NewLayoutFromCellCount(testCase.cellCount)
+				require.NoError(t, err)
+
+				peers := layout.PeersOf(testCase.pos)
+				assert.ElementsMatch(
+					t,
+					slices.Collect(testCase.expected.Row()),
+					slices.Collect(peers.Row()),
+					"row peers",
+				)
+				assert.ElementsMatch(
+					t,
+					slices.Collect(testCase.expected.Col()),
+					slices.Collect(peers.Col()),
+					"column peers",
+				)
+				assert.ElementsMatch(
+					t,
+					slices.Collect(testCase.expected.Block()),
+					slices.Collect(peers.Block()),
+					"block peers",
+				)
 			},
 		)
 	}
