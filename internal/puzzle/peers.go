@@ -43,13 +43,6 @@ func (p Peers) All() iter.Seq[Position] {
 	return slices.Values(p.allPeers)
 }
 
-// Each returns an array of iterators. The first provides the peers by row, the
-// second provides the peers by column, and the third provides the peers by
-// block.
-func (p Peers) Each() [3]iter.Seq[Position] {
-	return [3]iter.Seq[Position]{p.Row(), p.Col(), p.Block()}
-}
-
 func (p Peers) Row() iter.Seq[Position] {
 	return slices.Values(p.row)
 }

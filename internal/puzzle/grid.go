@@ -36,8 +36,9 @@ func NewGrid(cells []Candidates, layout Layout) (*Grid, error) {
 	return &grid, nil
 }
 
-// EachPeersOf returns an array of iterators over the cells that share a row,
-// column, or block with the provided position.
+// EachPeersOf returns three separate iterators over the cells that share,
+// respectively, the row, the column, and the block of the provided position (in
+// that order), each excluding the cell at position itself.
 func (g *Grid) EachPeersOf(position Position) [3]iter.Seq[Cell] {
 	peers := g.layout.PeersOf(position)
 

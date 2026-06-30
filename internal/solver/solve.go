@@ -6,11 +6,22 @@ import (
 	"github.com/tkngch/sudoku-go/internal/puzzle"
 )
 
-var ErrSolutionNotFound = errors.New("solution not found")
+var (
+	ErrInvalidGrid      = errors.New("invalid grid")
+	ErrSolutionNotFound = errors.New("solution not found")
+)
 
 // Solve returns a solved copy of the grid, or ErrSolutionNotFound if the grid
-// has no solution. The input grid is not modified.
+// has no solution, or ErrInvalidGrid if the grid is nil. The input grid is not
+// modified.
+//
+// When a puzzle admits more than one solution, Solve returns one of them (the
+// first its search reaches); it does not detect or report non-uniqueness.
 func Solve(grid *puzzle.Grid) (*puzzle.Grid, error) {
+	if grid == nil {
+		return nil, ErrInvalidGrid
+	}
+
 	grid = grid.Clone()
 
 	knownCells := make([]puzzle.Cell, 0)
@@ -29,8 +40,10 @@ func Solve(grid *puzzle.Grid) (*puzzle.Grid, error) {
 	return searchSolution(grid)
 }
 
-// removeInvalidCandidates propagates the values of the revealed cells to their
-// peers. It returns false when a peer left with no candidates.
+// removeInvalidCandidates propagates the values of the revealed cells.
+// removeInvalidCandidates returns false when the grid becomes unsolvable:
+// either a peer is left with no candidates, or no peer can hold an eliminated
+// value.
 func removeInvalidCandidates(grid *puzzle.Grid, newlyRevealedCells []puzzle.Cell) bool {
 	for len(newlyRevealedCells) > 0 {
 		revealed := newlyRevealedCells[0]
