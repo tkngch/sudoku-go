@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"os"
 	"strings"
 
 	"github.com/tkngch/sudoku-go/internal/puzzle"
@@ -47,6 +48,12 @@ func Run(args []string, stdin io.Reader, stdout, stderr io.Writer) ExitCode {
 
 	switch flags.NArg() {
 	case 0:
+		if isTerminal(stdin) {
+			flags.Usage()
+
+			return exitMisuse
+		}
+
 		data, err := io.ReadAll(stdin)
 		if err != nil {
 			_, _ = fmt.Fprintf(stderr, "error: %v\n", err)
@@ -63,16 +70,16 @@ func Run(args []string, stdin io.Reader, stdout, stderr io.Writer) ExitCode {
 		return exitMisuse
 	}
 
-	sudoku, err := puzzle.Parse(input)
+	grid, err := puzzle.Parse(input)
 	if err != nil {
 		_, _ = fmt.Fprintf(stderr, "error: %v\n", err)
 
 		return exitError
 	}
 
-	_, _ = fmt.Fprintf(stderr, "Sudoku\n%s\n", sudoku.Render())
+	_, _ = fmt.Fprintf(stderr, "Sudoku\n%s\n", grid.Render())
 
-	solution, err := solver.Solve(sudoku)
+	solution, err := solver.Solve(grid)
 	if err != nil {
 		_, _ = fmt.Fprintf(stderr, "error: %v\n", err)
 
@@ -83,6 +90,18 @@ func Run(args []string, stdin io.Reader, stdout, stderr io.Writer) ExitCode {
 	_, _ = fmt.Fprintf(stdout, "%s\n", solution.String())
 
 	return exitOK
+}
+
+// isTerminal reports whether r is an interactive character device (a TTY).
+func isTerminal(r io.Reader) bool {
+	f, ok := r.(interface{ Stat() (os.FileInfo, error) })
+	if !ok {
+		return false
+	}
+
+	fi, err := f.Stat()
+
+	return err == nil && fi.Mode()&os.ModeCharDevice != 0
 }
 
 // sanitize strips all whitespace so a puzzle may be supplied across multiple

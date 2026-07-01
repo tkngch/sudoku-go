@@ -80,17 +80,6 @@ func (l Layout) RowMajorIndex(position Position) int {
 	return position.row*l.GridSize() + position.col
 }
 
-func (l Layout) String() string {
-	return fmt.Sprintf(
-		"%d-by-%d grid with %d %d-by-%d blocks",
-		l.GridSize(),
-		l.GridSize(),
-		l.blockColCount*l.blockRowCount,
-		l.blockRowCount,
-		l.blockColCount,
-	)
-}
-
 func (l Layout) allPeers() []Peers {
 	rowPeerCount := l.GridSize() - 1
 	colPeerCount := l.GridSize() - 1

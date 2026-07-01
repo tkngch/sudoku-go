@@ -45,7 +45,7 @@ Output is split across two streams so the result is easy to capture or pipe:
   (machine-readable).
 - **stderr** — the input and the solution pretty-printed (human-readable).
 
-So `./sudoku/sudoku <puzzle> > solution.txt` writes only the compact solution to
+So `./build/sudoku <puzzle> > solution.txt` writes only the compact solution to
 the file, while the pretty-printed grids appear on the terminal.
 
 ## Exit codes
