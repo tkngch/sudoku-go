@@ -2,7 +2,7 @@
 
 A solver for variable-size Sudoku puzzles — 4×4, 6×6, 9×9, and 12×12.
 
-## Build & run
+## How to use
 
 ```sh
 make build                 # produces ./build/sudoku
@@ -22,7 +22,7 @@ A puzzle is a string of one character per cell, in row-major order. Its length
 determines the layout:
 
 | Length | Grid Size |
-| -----: | --------- |
+| -----: | --------: |
 |     16 | 4×4       |
 |     36 | 6×6       |
 |     81 | 9×9       |
