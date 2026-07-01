@@ -17,3 +17,13 @@ lint:
 .PHONY: test
 test:
 	go test -cover -race -timeout 30s ./...
+
+BIN := build/sudoku
+.PHONY: build
+build: $(BIN)
+
+$(BIN): $(wildcard cmd/sudoku/*) \
+	$(wildcard internal/puzzle/*) \
+	$(wildcard internal/solver/*) \
+	$(wildcard internal/sudoku/*)
+	go build -o $@ ./cmd/sudoku
