@@ -118,8 +118,7 @@ func TestGridRender(t *testing.T) {
 				"+-----+-----+\n" +
 				"| 4 3 | 2 1 |\n" +
 				"| 2 1 | 4 . |\n" +
-				"+-----+-----+\n" +
-				"4-by-4 grid with 4 2-by-2 blocks"),
+				"+-----+-----+"),
 		},
 		{
 			name: "6x6 grid, 2x3 blocks",
@@ -141,8 +140,7 @@ func TestGridRender(t *testing.T) {
 				"+-------+-------+\n" +
 				"| 3 1 2 | 6 4 5 |\n" +
 				"| 6 4 5 | 3 1 2 |\n" +
-				"+-------+-------+\n" +
-				"6-by-6 grid with 6 2-by-3 blocks"),
+				"+-------+-------+"),
 		},
 		{
 			name:     "empty grid",

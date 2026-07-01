@@ -1,0 +1,113 @@
+package sudoku
+
+import (
+	"errors"
+	"flag"
+	"fmt"
+	"io"
+	"os"
+	"strings"
+
+	"github.com/tkngch/sudoku-go/internal/puzzle"
+	"github.com/tkngch/sudoku-go/internal/solver"
+)
+
+type ExitCode int
+
+const (
+	ExitOK     ExitCode = 0
+	ExitError  ExitCode = 1
+	ExitMisuse ExitCode = 2
+)
+
+const appName = "sudoku"
+
+// Run parses a single Sudoku puzzle (from the sole argument, or from stdin when
+// no argument is given), solves it, and writes the results to the given
+// streams: the compact one-line solution to stdout, and human-readable
+// diagnostics (the rendered input and solution, or an error message) to stderr.
+func Run(args []string, stdin io.Reader, stdout, stderr io.Writer) ExitCode {
+	flags := flag.NewFlagSet(appName, flag.ContinueOnError)
+	flags.SetOutput(stderr)
+	flags.Usage = func() {
+		_, _ = fmt.Fprintf(stderr, "usage: %s [puzzle]\n", appName)
+
+		flags.PrintDefaults()
+	}
+
+	err := flags.Parse(args)
+	if err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			return ExitOK
+		}
+
+		return ExitMisuse
+	}
+
+	var input string
+
+	switch flags.NArg() {
+	case 0:
+		if isTerminal(stdin) {
+			flags.Usage()
+
+			return ExitMisuse
+		}
+
+		data, err := io.ReadAll(stdin)
+		if err != nil {
+			return fail(stderr, err)
+		}
+
+		input = sanitize(string(data))
+	case 1:
+		input = sanitize(flags.Arg(0))
+	default:
+		flags.Usage()
+
+		return ExitMisuse
+	}
+
+	grid, err := puzzle.Parse(input)
+	if err != nil {
+		return fail(stderr, err)
+	}
+
+	_, _ = fmt.Fprintf(stderr, "Sudoku\n%s\n", grid.Render())
+
+	solution, err := solver.Solve(grid)
+	if err != nil {
+		return fail(stderr, err)
+	}
+
+	_, _ = fmt.Fprintf(stderr, "Solution\n%s\n", solution.Render())
+	_, _ = fmt.Fprintf(stdout, "%s\n", solution.String())
+
+	return ExitOK
+}
+
+// isTerminal reports whether r is an interactive character device (a TTY).
+func isTerminal(r io.Reader) bool {
+	f, ok := r.(interface{ Stat() (os.FileInfo, error) })
+	if !ok {
+		return false
+	}
+
+	fi, err := f.Stat()
+
+	return err == nil && fi.Mode()&os.ModeCharDevice != 0
+}
+
+// sanitize strips all whitespace so a puzzle may be supplied across multiple
+// lines (for example pasted as a grid) and still match the compact,
+// one-character-per-cell form that puzzle.Parse expects.
+func sanitize(raw string) string {
+	return strings.Join(strings.Fields(raw), "")
+}
+
+// fail reports err on stderr and returns the error exit code.
+func fail(stderr io.Writer, err error) ExitCode {
+	_, _ = fmt.Fprintf(stderr, "error: %v\n", err)
+
+	return ExitError
+}

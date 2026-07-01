@@ -93,7 +93,6 @@ func (g *Grid) Render() string {
 	}
 
 	rowsAsString = append(rowsAsString, g.rowSeparator())
-	rowsAsString = append(rowsAsString, g.layout.String())
 
 	return strings.Join(rowsAsString, "\n")
 }

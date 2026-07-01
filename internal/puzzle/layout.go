@@ -18,14 +18,15 @@ type Layout struct {
 var ErrInvalidCellCount = errors.New("invalid cell count")
 
 func NewLayoutFromCellCount(cellCount int) (Layout, error) {
+	// cellCount is gridSize²; block dims (rows, cols) multiply to gridsize.
 	switch cellCount {
-	case 144:
+	case 144: // 144=(4×3)²
 		return newLayout(4, 3), nil
-	case 81:
+	case 81: // 81=(3×3)²
 		return newLayout(3, 3), nil
-	case 36:
+	case 36: // 36=(2×3)²
 		return newLayout(2, 3), nil
-	case 16:
+	case 16: // 16=(2×2)²
 		return newLayout(2, 2), nil
 
 	default:
@@ -78,17 +79,6 @@ func (l Layout) IsFirstRowInBlock(position Position) bool {
 
 func (l Layout) RowMajorIndex(position Position) int {
 	return position.row*l.GridSize() + position.col
-}
-
-func (l Layout) String() string {
-	return fmt.Sprintf(
-		"%d-by-%d grid with %d %d-by-%d blocks",
-		l.GridSize(),
-		l.GridSize(),
-		l.blockColCount*l.blockRowCount,
-		l.blockRowCount,
-		l.blockColCount,
-	)
 }
 
 func (l Layout) allPeers() []Peers {
