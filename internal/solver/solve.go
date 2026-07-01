@@ -1,7 +1,9 @@
 package solver
 
 import (
+	"context"
 	"errors"
+	"fmt"
 
 	"github.com/tkngch/sudoku-go/internal/puzzle"
 )
@@ -15,11 +17,20 @@ var (
 // has no solution, or ErrInvalidGrid if the grid is nil. The input grid is not
 // modified.
 //
+// ctx must not be nil. If the context is done before a solution is found, Solve
+// stops and returns a wrapped ctx.Err() (context.Canceled or
+// context.DeadlineExceeded).
+//
 // When a puzzle admits more than one solution, Solve returns one of them and
 // does not detect or report non-uniqueness.
-func Solve(grid *puzzle.Grid) (*puzzle.Grid, error) {
+func Solve(ctx context.Context, grid *puzzle.Grid) (*puzzle.Grid, error) {
 	if grid == nil {
 		return nil, ErrInvalidGrid
+	}
+
+	err := ctx.Err()
+	if err != nil {
+		return nil, fmt.Errorf("solve: %w", err)
 	}
 
 	grid = grid.Clone()
@@ -44,7 +55,7 @@ func Solve(grid *puzzle.Grid) (*puzzle.Grid, error) {
 		return nil, ErrSolutionNotFound
 	}
 
-	return searchSolution(grid)
+	return searchSolution(ctx, grid)
 }
 
 // removeInvalidCandidates propagates the values of the revealed cells.
@@ -149,7 +160,12 @@ func revealHiddenSingles(
 	return hiddenSingles, true
 }
 
-func searchSolution(grid *puzzle.Grid) (*puzzle.Grid, error) {
+func searchSolution(ctx context.Context, grid *puzzle.Grid) (*puzzle.Grid, error) {
+	err := ctx.Err()
+	if err != nil {
+		return nil, fmt.Errorf("search solution: %w", err)
+	}
+
 	cell, isFound := unfilledCellWithFewestCandidates(grid)
 	if !isFound {
 		if isSolved(grid) {
@@ -168,9 +184,17 @@ func searchSolution(grid *puzzle.Grid) (*puzzle.Grid, error) {
 			[]puzzle.Cell{puzzle.NewCell(cell.Position(), value)},
 		)
 		if ok {
-			solution, err := searchSolution(newGrid)
+			solution, err := searchSolution(ctx, newGrid)
 			if err == nil {
 				return solution, nil
+			}
+
+			if !errors.Is(err, ErrSolutionNotFound) {
+				// Any error other than ErrSolutionNotFound is unrecoverable, so
+				// propagate it instead of moving on to the next candidate. An
+				// example of unrecoverable error is context cancellation: the
+				// timeout was reached or the search was interrupted.
+				return nil, err
 			}
 		}
 	}
