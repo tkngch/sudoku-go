@@ -6,8 +6,8 @@ A solver for variable-size Sudoku puzzles.
 
 ```sh
 make build                        # produces ./build/sudoku
-./build/sudoku <puzzle>           # solve a puzzle passed as an argument
-echo "<puzzle>" | ./build/sudoku  # or pipe it in on stdin
+./build/sudoku <puzzle>           # solves a puzzle passed as an argument
+echo "<puzzle>" | ./build/sudoku  # or piped in on stdin
 ```
 
 Without building, you can also use:
