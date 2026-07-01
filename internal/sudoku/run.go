@@ -15,9 +15,9 @@ import (
 type ExitCode int
 
 const (
-	exitOK     ExitCode = 0
-	exitError  ExitCode = 1
-	exitMisuse ExitCode = 2
+	ExitOK     ExitCode = 0
+	ExitError  ExitCode = 1
+	ExitMisuse ExitCode = 2
 )
 
 const appName = "sudoku"
@@ -38,10 +38,10 @@ func Run(args []string, stdin io.Reader, stdout, stderr io.Writer) ExitCode {
 	err := flags.Parse(args)
 	if err != nil {
 		if errors.Is(err, flag.ErrHelp) {
-			return exitOK
+			return ExitOK
 		}
 
-		return exitMisuse
+		return ExitMisuse
 	}
 
 	var input string
@@ -51,14 +51,12 @@ func Run(args []string, stdin io.Reader, stdout, stderr io.Writer) ExitCode {
 		if isTerminal(stdin) {
 			flags.Usage()
 
-			return exitMisuse
+			return ExitMisuse
 		}
 
 		data, err := io.ReadAll(stdin)
 		if err != nil {
-			_, _ = fmt.Fprintf(stderr, "error: %v\n", err)
-
-			return exitError
+			return fail(stderr, err)
 		}
 
 		input = sanitize(string(data))
@@ -67,29 +65,25 @@ func Run(args []string, stdin io.Reader, stdout, stderr io.Writer) ExitCode {
 	default:
 		flags.Usage()
 
-		return exitMisuse
+		return ExitMisuse
 	}
 
 	grid, err := puzzle.Parse(input)
 	if err != nil {
-		_, _ = fmt.Fprintf(stderr, "error: %v\n", err)
-
-		return exitError
+		return fail(stderr, err)
 	}
 
 	_, _ = fmt.Fprintf(stderr, "Sudoku\n%s\n", grid.Render())
 
 	solution, err := solver.Solve(grid)
 	if err != nil {
-		_, _ = fmt.Fprintf(stderr, "error: %v\n", err)
-
-		return exitError
+		return fail(stderr, err)
 	}
 
 	_, _ = fmt.Fprintf(stderr, "Solution\n%s\n", solution.Render())
 	_, _ = fmt.Fprintf(stdout, "%s\n", solution.String())
 
-	return exitOK
+	return ExitOK
 }
 
 // isTerminal reports whether r is an interactive character device (a TTY).
@@ -109,4 +103,11 @@ func isTerminal(r io.Reader) bool {
 // one-character-per-cell form that puzzle.Parse expects.
 func sanitize(raw string) string {
 	return strings.Join(strings.Fields(raw), "")
+}
+
+// fail reports err on stderr and returns the error exit code.
+func fail(stderr io.Writer, err error) ExitCode {
+	_, _ = fmt.Fprintf(stderr, "error: %v\n", err)
+
+	return ExitError
 }
