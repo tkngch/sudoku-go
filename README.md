@@ -1,6 +1,6 @@
 # sudoku-go
 
-A solver for variable-size Sudoku puzzles — 4×4, 6×6, 9×9, and 12×12.
+A solver for variable-size Sudoku puzzles.
 
 ## How to use
 
