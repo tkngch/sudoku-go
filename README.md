@@ -16,6 +16,14 @@ Without building, you can also use:
 go run ./cmd/sudoku <puzzle>
 ```
 
+## Options
+
+- `-timeout duration` — the maximum time to spend **solving** the puzzle, for
+  example `10s`, `500ms`, or `2m`. Defaults to `30s`; pass `0` to disable the
+  timeout. Reaching the timeout exits with code 124. The timeout covers time
+  spent on solving a puzzle, excluding time spent on reading the puzzle from
+  stdin.
+
 ## Input format
 
 A puzzle is a string of one character per cell, in row-major order. Its length
@@ -55,6 +63,8 @@ the file, while the pretty-printed grids appear on the terminal.
 |    0 | success                                                                                 |
 |    1 | error: the puzzle could not be read, parsed, or solved (a message is printed to stderr) |
 |    2 | usage error: wrong number of arguments, or a bad flag                                   |
+|  124 | timed out (the -timeout limit reached before a solution was found)                      |
+|  130 | interrupted (received SIGINT / Ctrl-C or SIGTERM)                                       |
 
 ## Example
 

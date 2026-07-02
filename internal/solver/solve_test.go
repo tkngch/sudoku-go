@@ -1,7 +1,10 @@
 package solver_test
 
 import (
+	"context"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -100,7 +103,7 @@ func TestSolve(t *testing.T) {
 					require.NoErrorf(t, err, "could not parse [%v]", testCase.input)
 				}
 
-				actual, err := solver.Solve(grid)
+				actual, err := solver.Solve(context.Background(), grid)
 				if testCase.expectedError != nil {
 					require.ErrorIs(t, err, testCase.expectedError)
 				} else {
@@ -122,6 +125,97 @@ func TestSolve(t *testing.T) {
 					expected.Render(),
 					actual.Render(),
 				)
+			},
+		)
+	}
+}
+
+// cancelingContext returns nil for its first n Err() calls, then
+// context.Canceled.
+type cancelingContext struct {
+	calls, canceledAfter int
+}
+
+func newCancelingContext(canceledAfter int) *cancelingContext {
+	return &cancelingContext{
+		calls:         0,
+		canceledAfter: canceledAfter,
+	}
+}
+
+func (c *cancelingContext) Deadline() (time.Time, bool) { return time.Time{}, false }
+func (c *cancelingContext) Done() <-chan struct{}       { return nil }
+func (c *cancelingContext) Value(any) any               { return nil }
+
+func (c *cancelingContext) Err() error {
+	c.calls++
+	if c.calls <= c.canceledAfter {
+		return nil
+	}
+
+	return context.Canceled
+}
+
+func TestSolveContext(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		name        string
+		ctx         func() (context.Context, context.CancelFunc)
+		expectedErr error
+	}{
+		{
+			name: "timed-out",
+			ctx: func() (context.Context, context.CancelFunc) {
+				ctx, cancel := context.WithDeadline(context.Background(), time.Unix(0, 0))
+
+				return ctx, cancel
+			},
+			expectedErr: context.DeadlineExceeded,
+		},
+		{
+			name: "already canceled",
+			ctx: func() (context.Context, context.CancelFunc) {
+				ctx, cancel := context.WithCancel(context.Background())
+				cancel()
+
+				return ctx, nil
+			},
+			expectedErr: context.Canceled,
+		},
+		{
+			// Cancellation should be honored inside the search, not only at
+			// Solve's entry guard.
+			name:        "canceled early",
+			ctx:         func() (context.Context, context.CancelFunc) { return newCancelingContext(1), nil },
+			expectedErr: context.Canceled,
+		},
+		{
+			// Cancellation should be honored inside the search, even deep in
+			// several search-recursion.
+			name:        "canceled deep in the search",
+			ctx:         func() (context.Context, context.CancelFunc) { return newCancelingContext(4), nil },
+			expectedErr: context.Canceled,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(
+			testCase.name,
+			func(t *testing.T) {
+				t.Parallel()
+
+				grid, err := puzzle.Parse(strings.Repeat(".", 16))
+				require.NoError(t, err)
+
+				ctx, cancel := testCase.ctx()
+				if cancel != nil {
+					defer cancel()
+				}
+
+				solution, err := solver.Solve(ctx, grid)
+				require.ErrorIs(t, err, testCase.expectedErr)
+				assert.Nil(t, solution)
 			},
 		)
 	}
