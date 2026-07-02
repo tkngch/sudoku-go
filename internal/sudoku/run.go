@@ -102,9 +102,12 @@ func newFlagSet(stderr io.Writer) (*flag.FlagSet, *time.Duration) {
 
 		flags.PrintDefaults()
 	}
+
+	const defaultTimeout = 30 * time.Second
+
 	timeoutPtr := flags.Duration(
 		"timeout",
-		30*time.Second,
+		defaultTimeout,
 		"maximum time to spend on solving; 0 disables the timeout",
 	)
 

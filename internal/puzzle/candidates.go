@@ -17,6 +17,10 @@ type Candidates uint16
 // Given that Candidates has 16 bit width, the max value it can represent is 16.
 const maxCandidateValue = 16
 
+// Cell values 10..16 render as letters 'a'..'g'; 'a' represents
+// firstLetterValue.
+const firstLetterValue = 10
+
 // NewCandidatesForRange makes a new candidate that represents the ranged
 // values: from 1 to the provided max-value or 16, whichever is smaller.
 func NewCandidatesForRange(maxValue int) Candidates {
@@ -85,10 +89,10 @@ func (c Candidates) char() byte {
 	value := bits.TrailingZeros16(uint16(c)) + 1
 
 	switch {
-	case 1 <= value && value <= 9:
+	case 1 <= value && value < firstLetterValue:
 		return byte('0' + value)
-	case 10 <= value && value <= 16:
-		return byte('a' + value - 10)
+	case firstLetterValue <= value && value <= maxCandidateValue:
+		return byte('a' + value - firstLetterValue)
 	default:
 		return '.'
 	}

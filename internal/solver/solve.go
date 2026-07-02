@@ -211,6 +211,10 @@ func searchSolution(ctx context.Context, grid *puzzle.Grid) (*puzzle.Grid, error
 func unfilledCellWithFewestCandidates(grid *puzzle.Grid) (puzzle.Cell, bool) {
 	isFound := false
 
+	// minBranchingCandidates is the fewest candidates an unfilled cell can
+	// have, making such a cell an immediate minimum-remaining-values pick.
+	const minBranchingCandidates = 2
+
 	var foundCell puzzle.Cell
 
 	for cell := range grid.Cells() {
@@ -222,7 +226,7 @@ func unfilledCellWithFewestCandidates(grid *puzzle.Grid) (puzzle.Cell, bool) {
 			return foundCell, false
 		case 1:
 			continue
-		case 2:
+		case minBranchingCandidates:
 			return cell, true
 		default:
 			if !isFound || count < foundCell.Candidates().Count() {
