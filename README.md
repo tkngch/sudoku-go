@@ -98,3 +98,11 @@ Solution
 | 2 1 | 4 3 |
 +-----+-----+
 ```
+
+## Development
+
+```sh
+make          # format, vet, lint, and test (the default target)
+make test     # run the tests with coverage and the race detector
+make bench    # run the solver benchmarks (ns/op and allocations)
+```

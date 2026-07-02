@@ -18,6 +18,10 @@ lint:
 test:
 	go test -cover -race -timeout 30s ./...
 
+.PHONY: bench
+bench:
+	go test -timeout 1m -run=^$$ -bench=. -benchmem ./...
+
 BIN := build/sudoku
 .PHONY: build
 build: $(BIN)
