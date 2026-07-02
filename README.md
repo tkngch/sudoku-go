@@ -16,7 +16,7 @@ Without building, you can also use:
 go run ./cmd/sudoku <puzzle>
 ```
 
-## Options
+### Options
 
 - `-timeout duration` — the maximum time to spend **solving** the puzzle, for
   example `10s`, `500ms`, or `2m`. Defaults to `30s`; pass `0` to disable the
@@ -24,7 +24,7 @@ go run ./cmd/sudoku <puzzle>
   spent on solving a puzzle, excluding time spent on reading the puzzle from
   stdin.
 
-## Input format
+### Input format
 
 A puzzle is a string of one character per cell, in row-major order. Its length
 determines the layout:
@@ -45,7 +45,7 @@ Each character represents a cell:
 Whitespace and linebreak are ignored, so a puzzle may be supplied as one line or
 pasted/piped as a grid across several lines.
 
-## Output
+### Output
 
 Output is split across two streams so the result is easy to capture or pipe:
 
@@ -56,7 +56,7 @@ Output is split across two streams so the result is easy to capture or pipe:
 So `./build/sudoku <puzzle> > solution.txt` writes only the compact solution to
 the file, while the pretty-printed grids appear on the terminal.
 
-## Exit codes
+### Exit codes
 
 | Code | Meaning                                                                                 |
 | ---: | --------------------------------------------------------------------------------------- |
@@ -66,7 +66,7 @@ the file, while the pretty-printed grids appear on the terminal.
 |  124 | timed out (the -timeout limit reached before a solution was found)                      |
 |  130 | interrupted (received SIGINT / Ctrl-C or SIGTERM)                                       |
 
-## Example
+### Example
 
 ```sh
 $ ./build/sudoku '.2343.1243.1214.'
