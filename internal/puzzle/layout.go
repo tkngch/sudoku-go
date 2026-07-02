@@ -15,8 +15,12 @@ type Layout struct {
 	peers                        []Peers
 }
 
+// ErrInvalidCellCount is returned by NewLayoutFromCellCount when no supported
+// layout is found for the provided number of cells.
 var ErrInvalidCellCount = errors.New("invalid cell count")
 
+// NewLayoutFromCellCount returns the Layout whose grid holds cellCount cells.
+// It returns ErrInvalidCellCount when cellCount is not supported.
 func NewLayoutFromCellCount(cellCount int) (Layout, error) {
 	// cellCount is gridSize²; block dims (rows, cols) multiply to gridsize.
 	switch cellCount {
@@ -47,10 +51,8 @@ func newLayout(r, c int) Layout {
 // square-shaped, so its number of rows equals to its number of columns.
 func (l Layout) GridSize() int { return l.blockRowCount * l.blockColCount }
 
-func (l Layout) CellCount() int { return l.GridSize() * l.GridSize() }
-
 // PeersOf returns iterators over the precomputed peers. A peer shares the row,
-// the column or the group with the provided position. When the provided
+// the column or the block with the provided position. When the provided
 // position is off the grid, PeersOf returns empty iterators.
 func (l Layout) PeersOf(position Position) Peers {
 	if !l.IsOnGrid(position) {
@@ -60,6 +62,14 @@ func (l Layout) PeersOf(position Position) Peers {
 	return l.peers[l.RowMajorIndex(position)]
 }
 
+// RowMajorIndex returns the index of position when the grid's cells are laid
+// out in row-major order.
+func (l Layout) RowMajorIndex(position Position) int {
+	return position.row*l.GridSize() + position.col
+}
+
+// IsOnGrid returns true when position lies within the grid. Otherwise, it
+// returns false.
 func (l Layout) IsOnGrid(position Position) bool {
 	return position.row >= 0 &&
 		position.row < l.GridSize() &&
@@ -67,18 +77,17 @@ func (l Layout) IsOnGrid(position Position) bool {
 		position.col < l.GridSize()
 }
 
-func (l Layout) IsFirstColumnInBlock(position Position) bool {
+// cellCount returns the number of cells in a grid.
+func (l Layout) cellCount() int { return l.GridSize() * l.GridSize() }
+
+func (l Layout) isFirstColumnInBlock(position Position) bool {
 	return position.col == 0 ||
 		!l.areInSameBlock(position, NewPosition(position.row, position.col-1))
 }
 
-func (l Layout) IsFirstRowInBlock(position Position) bool {
+func (l Layout) isFirstRowInBlock(position Position) bool {
 	return position.row == 0 ||
 		!l.areInSameBlock(position, NewPosition(position.row-1, position.col))
-}
-
-func (l Layout) RowMajorIndex(position Position) int {
-	return position.row*l.GridSize() + position.col
 }
 
 func (l Layout) allPeers() []Peers {
@@ -86,7 +95,7 @@ func (l Layout) allPeers() []Peers {
 	colPeerCount := l.GridSize() - 1
 	blockPeerCount := l.blockRowCount*l.blockColCount - 1
 
-	allPeers := make([]Peers, l.CellCount())
+	allPeers := make([]Peers, l.cellCount())
 
 	for this := range l.allPositions() {
 		rowPeers := make([]Position, 0, rowPeerCount)

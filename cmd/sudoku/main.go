@@ -1,3 +1,4 @@
+// Command sudoku solves a Sudoku puzzle.
 package main
 
 import (

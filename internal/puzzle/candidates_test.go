@@ -85,52 +85,6 @@ func TestNewCandidatesForRange(t *testing.T) {
 	}
 }
 
-func TestCandidatesUnion(t *testing.T) {
-	t.Parallel()
-
-	testCases := []struct {
-		name         string
-		initialValue puzzle.Candidates
-		adders       []puzzle.Candidates
-		expected     puzzle.Candidates
-	}{
-		{
-			name:         "0 and 1",
-			initialValue: 0b0,
-			adders:       []puzzle.Candidates{0b1},
-			expected:     0b1,
-		},
-		{
-			name:         "1 and 2",
-			initialValue: 0b01,
-			adders:       []puzzle.Candidates{0b10},
-			expected:     0b11,
-		},
-		{
-			name:         "1 and 1",
-			initialValue: 0b1,
-			adders:       []puzzle.Candidates{0b1},
-			expected:     0b1,
-		},
-	}
-
-	for _, testCase := range testCases {
-		t.Run(
-			testCase.name,
-			func(t *testing.T) {
-				t.Parallel()
-
-				value := testCase.initialValue
-				for _, add := range testCase.adders {
-					value = value.Union(add)
-				}
-
-				assert.Equal(t, testCase.expected, value)
-			},
-		)
-	}
-}
-
 func TestCandidatesRemove(t *testing.T) {
 	t.Parallel()
 

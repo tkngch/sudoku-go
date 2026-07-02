@@ -7,7 +7,7 @@ import (
 	"slices"
 )
 
-// Grid is a square sudoku grid of cells in row-major order.
+// Grid is a square Sudoku grid of cells in row-major order.
 //
 // Grid is a mutable reference type and is used through a pointer: copying a
 // *Grid aliases the same underlying cells, so Set mutates every alias. Use
@@ -17,15 +17,17 @@ type Grid struct {
 	layout         Layout
 }
 
+// ErrInvalidCells is returned by NewGrid when the number of cells is
+// inconsistent with the layout.
 var ErrInvalidCells = errors.New("invalid cells")
 
 // NewGrid returns a Grid holding cells laid out by layout. It returns
-// ErrInvalidCells when len(cells) != layout.CellCount().
+// ErrInvalidCells when len(cells) != layout.cellCount().
 func NewGrid(cells []Candidates, layout Layout) (*Grid, error) {
-	if len(cells) != layout.CellCount() {
+	if len(cells) != layout.cellCount() {
 		err := fmt.Errorf(
 			"expected %d cells, got %d: %w",
-			layout.CellCount(), len(cells), ErrInvalidCells,
+			layout.cellCount(), len(cells), ErrInvalidCells,
 		)
 
 		return nil, err
@@ -49,6 +51,9 @@ func (g *Grid) EachPeersOf(position Position) [3]iter.Seq[Cell] {
 	}
 }
 
+// AllPeersOf returns an iterator over the distinct cells that share the row,
+// column or block. It excludes the cell at the provided position, because a
+// cell cannot be a peer of itself.
 func (g *Grid) AllPeersOf(position Position) iter.Seq[Cell] {
 	return func(yield func(Cell) bool) {
 		for peer := range g.layout.PeersOf(position).All() {
@@ -59,6 +64,7 @@ func (g *Grid) AllPeersOf(position Position) iter.Seq[Cell] {
 	}
 }
 
+// Cells returns an iterator over every cell of the grid in row-major order.
 func (g *Grid) Cells() iter.Seq[Cell] {
 	return func(yield func(Cell) bool) {
 		for i, candidates := range g.cellCandidates {

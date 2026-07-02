@@ -14,8 +14,10 @@ import (
 	"github.com/tkngch/sudoku-go/internal/solver"
 )
 
+// ExitCode is the process exit status.
 type ExitCode int
 
+// Exit codes returned by Run.
 const (
 	ExitOK          ExitCode = 0
 	ExitError       ExitCode = 1
