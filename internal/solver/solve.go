@@ -9,7 +9,11 @@ import (
 )
 
 var (
-	ErrInvalidGrid      = errors.New("invalid grid")
+	// ErrInvalidGrid is returned by Solve when the grid is nil or contains a
+	// cell with no candidate values.
+	ErrInvalidGrid = errors.New("invalid grid")
+
+	// ErrSolutionNotFound is returned by Solve when the grid has no solution.
 	ErrSolutionNotFound = errors.New("solution not found")
 )
 

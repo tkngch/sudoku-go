@@ -7,6 +7,8 @@ import (
 	"strings"
 )
 
+// ErrInvalidCharacter is returned by Parse when the input contains an invalid
+// cell value.
 var ErrInvalidCharacter = errors.New("invalid character")
 
 // Parse reads a puzzle from its compact form: one character per cell in
@@ -65,7 +67,7 @@ func (g *Grid) String() string {
 	return builder.String()
 }
 
-// Render returns multiline, pretty printing of Grid.
+// Render returns a multiline, pretty-printed rendering of the grid.
 func (g *Grid) Render() string {
 	if g == nil || len(g.cellCandidates) == 0 {
 		return ""
@@ -75,11 +77,11 @@ func (g *Grid) Render() string {
 
 	row := make([]string, 0, g.layout.GridSize()*3)
 	for cell := range g.Cells() {
-		if cell.Position().col == 0 && g.layout.IsFirstRowInBlock(cell.Position()) {
+		if cell.Position().col == 0 && g.layout.isFirstRowInBlock(cell.Position()) {
 			rowsAsString = append(rowsAsString, g.rowSeparator())
 		}
 
-		if g.layout.IsFirstColumnInBlock(cell.Position()) {
+		if g.layout.isFirstColumnInBlock(cell.Position()) {
 			row = append(row, "|")
 		}
 

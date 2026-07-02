@@ -5,6 +5,8 @@ import (
 	"slices"
 )
 
+// Peers holds the positions that share a row, column, or block with a given
+// cell.
 type Peers struct {
 	row      []Position
 	column   []Position
@@ -12,10 +14,13 @@ type Peers struct {
 	allPeers []Position
 }
 
+// NewEmptyPeers returns a Peers with no members.
 func NewEmptyPeers() Peers {
 	return NewPeers([]Position{}, []Position{}, []Position{})
 }
 
+// NewPeers returns a Peers built from the given row, column, and block peer
+// positions.
 func NewPeers(rowPeers, colPeers, blockPeers []Position) Peers {
 	allPeers := make([]Position, 0, len(rowPeers)+len(colPeers)+len(blockPeers))
 
@@ -43,14 +48,17 @@ func (p Peers) All() iter.Seq[Position] {
 	return slices.Values(p.allPeers)
 }
 
+// Row returns an iterator over the row peers.
 func (p Peers) Row() iter.Seq[Position] {
 	return slices.Values(p.row)
 }
 
+// Col returns an iterator over the column peers.
 func (p Peers) Col() iter.Seq[Position] {
 	return slices.Values(p.column)
 }
 
+// Block returns an iterator over the block peers.
 func (p Peers) Block() iter.Seq[Position] {
 	return slices.Values(p.block)
 }

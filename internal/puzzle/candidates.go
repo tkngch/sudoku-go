@@ -29,20 +29,15 @@ func NewCandidatesForRange(maxValue int) Candidates {
 	return candidates
 }
 
-// NewSingleCandidate makes a new candidate that represents the provided value.
-// Only values from 1 to 16 are supported. NewSingleCandidate(17), for example,
-// returns an empty candidates.
+// NewSingleCandidate returns a new candidate that represents the provided
+// value. Only values from 1 to 16 are supported. NewSingleCandidate(17), for
+// example, returns an empty candidates.
 func NewSingleCandidate(value int) Candidates {
 	if value < 1 || value > maxCandidateValue {
 		return 0
 	}
 
 	return 1 << (value - 1)
-}
-
-// Union returns the candidates present in either c or other.
-func (c Candidates) Union(other Candidates) Candidates {
-	return c | other
 }
 
 // Remove returns the candidates in c that are not in other.
