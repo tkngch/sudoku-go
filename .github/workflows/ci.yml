@@ -36,3 +36,85 @@ jobs:
         with:
           version: v2.12
       - run: make test
+
+  bench:
+    name: Benchmark (advisory)
+    needs: checks
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Check out PR head
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Check out PR base
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: base
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+
+      - name: Benchmark base
+        continue-on-error: true
+        working-directory: base
+        run: |
+          go test -run='^$' -bench='^BenchmarkSolve$' -benchmem \
+            -count=10 -timeout 20m ./internal/solver/ \
+            | tee "${GITHUB_WORKSPACE}/base.txt"
+
+      - name: Benchmark head
+        continue-on-error: true
+        run: |
+          go test -run='^$' -bench='^BenchmarkSolve$' -benchmem \
+            -count=10 -timeout 20m ./internal/solver/ \
+            | tee "${GITHUB_WORKSPACE}/head.txt"
+
+      - name: Compare with benchstat
+        if: always()
+        run: |
+          {
+            echo '### Benchmark — `internal/solver` (advisory, non-blocking)'
+            echo
+            echo "base \`${{ github.event.pull_request.base.sha }}\` → head \`${{ github.event.pull_request.head.sha }}\`"
+            echo
+            if grep -q '^Benchmark' base.txt; then
+              echo '```'
+              go tool benchstat base=base.txt head=head.txt || true
+              echo '```'
+            else
+              echo '> No benchmarks on the base commit; showing head numbers only, no delta.'
+              echo
+              echo '```'
+              go tool benchstat head=head.txt || cat head.txt
+              echo '```'
+            fi
+            echo
+            echo '_Advisory only — with n=10 on shared CI runners, both the deltas and the p-values are noisy, so treat neither as conclusive. Confirm anything surprising locally at a higher `-count`._'
+            echo '<!-- benchstat-regression -->'
+          } > comment.md
+          cat comment.md
+          cat comment.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Post / update PR comment
+        if: always() && github.event.pull_request.head.repo.fork == false
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          marker='<!-- benchstat-regression -->'
+          body="$(cat comment.md)"
+          id=$(gh api --paginate "repos/${REPO}/issues/${PR}/comments" \
+                --jq "map(select(.body | contains(\"${marker}\"))) | .[0].id // empty")
+          if [ -n "$id" ]; then
+            gh api --method PATCH "repos/${REPO}/issues/comments/${id}" -f body="$body" >/dev/null
+          else
+            gh api --method POST "repos/${REPO}/issues/${PR}/comments" -f body="$body" >/dev/null
+          fi

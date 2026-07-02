@@ -1,3 +1,5 @@
+SHELL := bash
+
 default: format vet lint test
 
 .PHONY: format
@@ -20,7 +22,7 @@ test:
 
 .PHONY: bench
 bench:
-	go test -timeout 1m -run=^$$ -bench=. -benchmem ./...
+	@set -o pipefail; go test -run='^$$' -bench='^BenchmarkSolve$$' -benchmem -count=10 -timeout 20m ./internal/solver/ | go tool benchstat -
 
 BIN := build/sudoku
 .PHONY: build
