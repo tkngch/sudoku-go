@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/tkngch/sudoku-go/internal/puzzle"
 )
 
@@ -14,13 +15,13 @@ func TestNewGrid(t *testing.T) {
 	testCases := []struct {
 		name          string
 		cells         []puzzle.Candidates
-		layout        puzzle.Layout
+		cellCount     int
 		expectedError error
 	}{
 		{
 			name:          "not enough cells for the layout",
 			cells:         []puzzle.Candidates{},
-			layout:        Must(puzzle.NewLayoutFromCellCount(16)),
+			cellCount:     16,
 			expectedError: puzzle.ErrInvalidCells,
 		},
 	}
@@ -31,7 +32,10 @@ func TestNewGrid(t *testing.T) {
 			func(t *testing.T) {
 				t.Parallel()
 
-				_, err := puzzle.NewGrid(testCase.cells, testCase.layout)
+				layout, err := puzzle.NewLayoutForCellCount(testCase.cellCount)
+				require.NoError(t, err)
+
+				_, err = puzzle.NewGrid(testCase.cells, layout)
 				assert.ErrorIs(t, err, testCase.expectedError)
 			},
 		)
@@ -46,10 +50,9 @@ func TestGridSet(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			grid := newGrid(
-				slices.Repeat([][]int{{1, 2, 3, 4}}, 4),
-				Must(puzzle.NewLayoutFromCellCount(16)),
-			)
+			layout, err := puzzle.NewLayoutForCellCount(16)
+			require.NoError(t, err)
+			grid := newGrid(t, slices.Repeat([][]int{{1, 2, 3, 4}}, 4), layout)
 
 			newCandidate := puzzle.NewSingleCandidate(9)
 			grid.Set(puzzle.NewPosition(1, 0), newCandidate)
@@ -79,10 +82,9 @@ func TestGridSet(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			grid := newGrid(
-				slices.Repeat([][]int{{1, 2, 3, 4}}, 4),
-				Must(puzzle.NewLayoutFromCellCount(16)),
-			)
+			layout, err := puzzle.NewLayoutForCellCount(16)
+			require.NoError(t, err)
+			grid := newGrid(t, slices.Repeat([][]int{{1, 2, 3, 4}}, 4), layout)
 
 			assert.NotPanics(t, func() {
 				grid.Set(puzzle.NewPosition(0, 2), puzzle.NewSingleCandidate(9))
@@ -95,12 +97,13 @@ func TestGridClone(t *testing.T) {
 	t.Parallel()
 
 	rows := slices.Repeat([][]int{{1, 2, 3, 4}}, 4)
-	layout := Must(puzzle.NewLayoutFromCellCount(16))
+	layout, err := puzzle.NewLayoutForCellCount(16)
+	require.NoError(t, err)
 
 	t.Run("mutating the clone leaves the original unchanged", func(t *testing.T) {
 		t.Parallel()
 
-		original := newGrid(rows, layout)
+		original := newGrid(t, rows, layout)
 		clone := original.Clone()
 
 		clone.Set(puzzle.NewPosition(0, 0), puzzle.NewSingleCandidate(2))
@@ -115,7 +118,7 @@ func TestGridClone(t *testing.T) {
 	t.Run("mutating the original leaves the clone unchanged", func(t *testing.T) {
 		t.Parallel()
 
-		original := newGrid(rows, layout)
+		original := newGrid(t, rows, layout)
 		clone := original.Clone()
 
 		original.Set(puzzle.NewPosition(0, 0), puzzle.NewSingleCandidate(2))
@@ -128,7 +131,9 @@ func TestGridClone(t *testing.T) {
 	})
 }
 
-func newGrid(rows [][]int, layout puzzle.Layout) *puzzle.Grid {
+func newGrid(t *testing.T, rows [][]int, layout puzzle.Layout) *puzzle.Grid {
+	t.Helper()
+
 	cells := make([]puzzle.Candidates, 0, layout.GridSize()*layout.GridSize())
 
 	for _, rowValues := range rows {
@@ -137,5 +142,8 @@ func newGrid(rows [][]int, layout puzzle.Layout) *puzzle.Grid {
 		}
 	}
 
-	return Must(puzzle.NewGrid(cells, layout))
+	grid, err := puzzle.NewGrid(cells, layout)
+	require.NoError(t, err)
+
+	return grid
 }

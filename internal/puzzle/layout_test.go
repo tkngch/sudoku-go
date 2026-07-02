@@ -9,21 +9,21 @@ import (
 	"github.com/tkngch/sudoku-go/internal/puzzle"
 )
 
-func TestNewLayoutFromCellCount(t *testing.T) {
+func TestNewLayoutForCellCount(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
 		name             string
 		input            int
-		expectedError    error
 		expectedGridSize int
+		expectedError    error
 	}{
-		{name: "16 cells", input: 16, expectedGridSize: 4},
-		{name: "36 cells", input: 36, expectedGridSize: 6},
-		{name: "81 cells", input: 81, expectedGridSize: 9},
-		{name: "144 cells", input: 144, expectedGridSize: 12},
-		{name: "zero", input: 0, expectedError: puzzle.ErrInvalidCellCount},
-		{name: "255", input: 255, expectedError: puzzle.ErrInvalidCellCount},
+		{name: "16 cells", input: 16, expectedGridSize: 4, expectedError: nil},
+		{name: "36 cells", input: 36, expectedGridSize: 6, expectedError: nil},
+		{name: "81 cells", input: 81, expectedGridSize: 9, expectedError: nil},
+		{name: "144 cells", input: 144, expectedGridSize: 12, expectedError: nil},
+		{name: "zero", input: 0, expectedGridSize: 0, expectedError: puzzle.ErrInvalidCellCount},
+		{name: "255", input: 255, expectedGridSize: 0, expectedError: puzzle.ErrInvalidCellCount},
 	}
 
 	for _, testCase := range testCases {
@@ -32,7 +32,7 @@ func TestNewLayoutFromCellCount(t *testing.T) {
 			func(t *testing.T) {
 				t.Parallel()
 
-				layout, err := puzzle.NewLayoutFromCellCount(testCase.input)
+				layout, err := puzzle.NewLayoutForCellCount(testCase.input)
 
 				if testCase.expectedError != nil {
 					require.Error(t, err)
@@ -52,7 +52,9 @@ func TestNewLayoutFromCellCount(t *testing.T) {
 func TestLayoutIsOnGrid(t *testing.T) {
 	t.Parallel()
 
-	layout := Must(puzzle.NewLayoutFromCellCount(16)) // 4x4 grid
+	layout, err := puzzle.NewLayoutForCellCount(16) // 4x4 grid
+	require.NoError(t, err)
+
 	testCases := []struct {
 		name     string
 		position puzzle.Position
@@ -130,7 +132,7 @@ func TestLayoutRowMajorIndex(t *testing.T) {
 			func(t *testing.T) {
 				t.Parallel()
 
-				layout, err := puzzle.NewLayoutFromCellCount(testCase.cellCount)
+				layout, err := puzzle.NewLayoutForCellCount(testCase.cellCount)
 				require.NoError(t, err)
 				assert.Equal(t, testCase.expected, layout.RowMajorIndex(testCase.position))
 			},
@@ -211,7 +213,7 @@ func TestLayoutPeersOf(t *testing.T) {
 			func(t *testing.T) {
 				t.Parallel()
 
-				layout, err := puzzle.NewLayoutFromCellCount(testCase.cellCount)
+				layout, err := puzzle.NewLayoutForCellCount(testCase.cellCount)
 				require.NoError(t, err)
 
 				peers := layout.PeersOf(testCase.pos)

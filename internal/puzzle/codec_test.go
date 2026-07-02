@@ -98,10 +98,10 @@ func TestGridRender(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
-		name     string
-		grid     [][]int
-		layout   puzzle.Layout
-		expected string
+		name      string
+		grid      [][]int
+		cellCount int
+		expected  string
 	}{
 		{
 			name: "4x4 grid, 2x2 blocks",
@@ -111,7 +111,7 @@ func TestGridRender(t *testing.T) {
 				{4, 3, 2, 1},
 				{2, 1, 4, 0},
 			},
-			layout: Must(puzzle.NewLayoutFromCellCount(16)),
+			cellCount: 16,
 			expected: ("+-----+-----+\n" +
 				"| 1 2 | 3 4 |\n" +
 				"| 3 4 | 1 2 |\n" +
@@ -130,7 +130,7 @@ func TestGridRender(t *testing.T) {
 				{3, 1, 2, 6, 4, 5},
 				{6, 4, 5, 3, 1, 2},
 			},
-			layout: Must(puzzle.NewLayoutFromCellCount(36)),
+			cellCount: 36,
 			expected: ("+-------+-------+\n" +
 				"| . 2 3 | 4 5 6 |\n" +
 				"| 4 5 6 | 1 2 3 |\n" +
@@ -143,10 +143,10 @@ func TestGridRender(t *testing.T) {
 				"+-------+-------+"),
 		},
 		{
-			name:     "empty grid",
-			grid:     [][]int{},
-			layout:   puzzle.Layout{},
-			expected: "",
+			name:      "empty grid",
+			grid:      [][]int{},
+			cellCount: 0,
+			expected:  "",
 		},
 	}
 
@@ -156,17 +156,22 @@ func TestGridRender(t *testing.T) {
 			func(t *testing.T) {
 				t.Parallel()
 
-				grid := newGrid(testCase.grid, testCase.layout)
+				grid := newGrid(t, testCase.grid, newLayoutForCellCount(t, testCase.cellCount))
 				assert.Equal(t, testCase.expected, grid.Render())
 			},
 		)
 	}
 }
 
-func Must[T any](val T, err error) T {
-	if err != nil {
-		panic(err)
+func newLayoutForCellCount(t *testing.T, cellCount int) puzzle.Layout {
+	t.Helper()
+
+	if cellCount == 0 { // empty grid: a zero-value layout renders as ""
+		return puzzle.Layout{}
 	}
 
-	return val
+	layout, err := puzzle.NewLayoutForCellCount(cellCount)
+	require.NoError(t, err)
+
+	return layout
 }
