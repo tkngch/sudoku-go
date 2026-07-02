@@ -7,13 +7,15 @@ linters:
     - wsl  # deprecated
     - depguard
     - dupl
-    - exhaustruct
-    - goconst
-    - ireturn
     - mnd
   settings:
-    funlen:
-      lines: 120
+    goconst:
+      ignore-tests: true
+  exclusions:
+    rules:
+      # funlen on tests makes it difficult to write table-driven tests.
+      - path: _test\.go
+        linters: [funlen]
 
 formatters:
   enable:

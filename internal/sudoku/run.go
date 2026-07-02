@@ -38,18 +38,7 @@ var errUsage = errors.New("usage error")
 // streams: the compact one-line solution to stdout, and human-readable
 // diagnostics (the rendered input and solution, or an error message) to stderr.
 func Run(ctx context.Context, args []string, stdin io.Reader, stdout, stderr io.Writer) ExitCode {
-	flags := flag.NewFlagSet(appName, flag.ContinueOnError)
-	flags.SetOutput(stderr)
-	flags.Usage = func() {
-		_, _ = fmt.Fprintf(stderr, "usage: %s [-timeout duration] [puzzle]\n", appName)
-
-		flags.PrintDefaults()
-	}
-	timeoutPtr := flags.Duration(
-		"timeout",
-		30*time.Second,
-		"maximum time to spend on solving; 0 disables the timeout",
-	)
+	flags, timeoutPtr := newFlagSet(stderr)
 
 	err := flags.Parse(args)
 	switch {
@@ -101,6 +90,25 @@ func Run(ctx context.Context, args []string, stdin io.Reader, stdout, stderr io.
 	_, _ = fmt.Fprintf(stdout, "%s\n", solution.String())
 
 	return ExitOK
+}
+
+// newFlagSet builds the CLI flag set and returns it together with the parsed
+// -timeout destination.
+func newFlagSet(stderr io.Writer) (*flag.FlagSet, *time.Duration) {
+	flags := flag.NewFlagSet(appName, flag.ContinueOnError)
+	flags.SetOutput(stderr)
+	flags.Usage = func() {
+		_, _ = fmt.Fprintf(stderr, "usage: %s [-timeout duration] [puzzle]\n", appName)
+
+		flags.PrintDefaults()
+	}
+	timeoutPtr := flags.Duration(
+		"timeout",
+		30*time.Second,
+		"maximum time to spend on solving; 0 disables the timeout",
+	)
+
+	return flags, timeoutPtr
 }
 
 // resolveInput returns the sanitized puzzle input from the sole argument or,

@@ -12,14 +12,14 @@ import (
 var ErrInvalidCharacter = errors.New("invalid character")
 
 // Parse reads a puzzle from its compact form: one character per cell in
-// row-major order, whose length selects the layout (see
-// NewLayoutFromCellCount). '0' or '.' is an empty cell (all candidates);
-// '1'-'9' and 'a'-'g'/'A'-'G' (values 10-16) are givens. It returns
-// ErrInvalidCellCount or ErrInvalidCharacter for malformed input.
+// row-major order, whose length selects the layout (see NewLayoutForCellCount).
+// '0' or '.' is an empty cell (all candidates); '1'-'9' and 'a'-'g'/'A'-'G'
+// (values 10-16) are givens. It returns ErrInvalidCellCount or
+// ErrInvalidCharacter for malformed input.
 func Parse(input string) (*Grid, error) {
 	cellCount := len(input)
 
-	layout, err := NewLayoutFromCellCount(cellCount)
+	layout, err := NewLayoutForCellCount(cellCount)
 	if err != nil {
 		return nil, fmt.Errorf("parse: %w", err)
 	}
@@ -27,10 +27,12 @@ func Parse(input string) (*Grid, error) {
 	minCellValue, maxCellValue := 1, layout.GridSize()
 
 	cells := make([]Candidates, cellCount)
+
 	for idx := range cellCount {
 		char := input[idx]
 
 		value, ok := toInt(char)
+
 		switch {
 		case ok && value >= minCellValue && value <= maxCellValue:
 			cells[idx] = NewSingleCandidate(value)
@@ -58,6 +60,7 @@ func (g *Grid) String() string {
 	cells := slices.Collect(g.Cells())
 
 	var builder strings.Builder
+
 	builder.Grow(len(cells))
 
 	for _, cell := range cells {
@@ -76,6 +79,7 @@ func (g *Grid) Render() string {
 	rowsAsString := make([]string, 0, g.layout.GridSize())
 
 	row := make([]string, 0, g.layout.GridSize()*3)
+
 	for cell := range g.Cells() {
 		if cell.Position().col == 0 && g.layout.isFirstRowInBlock(cell.Position()) {
 			rowsAsString = append(rowsAsString, g.rowSeparator())

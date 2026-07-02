@@ -15,13 +15,13 @@ type Layout struct {
 	peers                        []Peers
 }
 
-// ErrInvalidCellCount is returned by NewLayoutFromCellCount when no supported
+// ErrInvalidCellCount is returned by NewLayoutForCellCount when no supported
 // layout is found for the provided number of cells.
 var ErrInvalidCellCount = errors.New("invalid cell count")
 
-// NewLayoutFromCellCount returns the Layout whose grid holds cellCount cells.
+// NewLayoutForCellCount returns the Layout whose grid holds cellCount cells.
 // It returns ErrInvalidCellCount when cellCount is not supported.
-func NewLayoutFromCellCount(cellCount int) (Layout, error) {
+func NewLayoutForCellCount(cellCount int) (Layout, error) {
 	// cellCount is gridSize²; block dims (rows, cols) multiply to gridsize.
 	switch cellCount {
 	case 144: // 144=(4×3)²
@@ -41,10 +41,14 @@ func NewLayoutFromCellCount(cellCount int) (Layout, error) {
 }
 
 func newLayout(r, c int) Layout {
-	l := Layout{blockRowCount: r, blockColCount: c}
-	l.peers = l.allPeers()
+	layout := Layout{
+		blockRowCount: r,
+		blockColCount: c,
+		peers:         nil, // computed below, needs block dims set first
+	}
+	layout.peers = layout.allPeers()
 
-	return l
+	return layout
 }
 
 // GridSize returns the number of rows or columns in a grid. A grid is

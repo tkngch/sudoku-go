@@ -82,12 +82,13 @@ func (c Candidates) String() string {
 // char returns the display char for the first candidate value. 1..9 are mapped
 // to '1'..'9', and 10..16 are mapped 'a'..'g'.
 func (c Candidates) char() byte {
-	v := bits.TrailingZeros16(uint16(c)) + 1
+	value := bits.TrailingZeros16(uint16(c)) + 1
+
 	switch {
-	case 1 <= v && v <= 9:
-		return byte('0' + v)
-	case 10 <= v && v <= 16:
-		return byte('a' + v - 10)
+	case 1 <= value && value <= 9:
+		return byte('0' + value)
+	case 10 <= value && value <= 16:
+		return byte('a' + value - 10)
 	default:
 		return '.'
 	}
