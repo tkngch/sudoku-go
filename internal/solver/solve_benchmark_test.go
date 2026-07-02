@@ -26,7 +26,7 @@ type benchmarkingPuzzle struct {
 func benchmarkingPuzzles() []benchmarkingPuzzle {
 	return []benchmarkingPuzzle{
 		{
-			name: "diabolical - 1",
+			name: "benchmark - 1",
 			input: "000100000" + "008090300" + "170800000" +
 				"020000067" + "061050930" + "930000040" +
 				"000002056" + "003040700" + "000001000",
@@ -35,7 +35,7 @@ func benchmarkingPuzzles() []benchmarkingPuzzle {
 				"719382456" + "283546719" + "546971283",
 		},
 		{
-			name: "diabolical - 2",
+			name: "benchmark - 2",
 			input: "000607000" + "003080600" + "010309080" +
 				"004000300" + "200000006" + "008050100" +
 				"609108407" + "080000010" + "000705000",
@@ -44,7 +44,7 @@ func benchmarkingPuzzles() []benchmarkingPuzzle {
 				"629138457" + "785264913" + "341795268",
 		},
 		{
-			name: "diabolical - 3",
+			name: "benchmark - 3",
 			input: "050090000" + "018400000" + "370008000" +
 				"007002530" + "530000082" + "082500900" +
 				"000900045" + "000003860" + "000080020",
@@ -53,7 +53,7 @@ func benchmarkingPuzzles() []benchmarkingPuzzle {
 				"823961745" + "741253869" + "965784123",
 		},
 		{
-			name: "diabolical - 4",
+			name: "benchmark - 4",
 			input: "600305000" + "080200051" + "000000800" +
 				"007010060" + "400703008" + "050040700" +
 				"002000000" + "940007020" + "000109004",
