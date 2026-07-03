@@ -39,18 +39,22 @@ func TestSolve(t *testing.T) {
 		},
 		{
 			name: "9x9 without backtracking",
-			input: new("812753649" + "940080170" + "005491203" + "054237090" +
-				"369845020" + "207069504" + "521970360" + "438526917" + "796318452"),
-			expected: new("812753649" + "943682175" + "675491283" + "154237896" +
-				"369845721" + "287169534" + "521974368" + "438526917" + "796318452"),
+			input: new("812753649" + "940080170" + "005491203" +
+				"054237090" + "369845020" + "207069504" +
+				"521970360" + "438526917" + "796318452"),
+			expected: new("812753649" + "943682175" + "675491283" +
+				"154237896" + "369845721" + "287169534" +
+				"521974368" + "438526917" + "796318452"),
 			expectedError: nil,
 		},
 		{
 			name: "9x9 with backtracking",
-			input: new("800000000" + "003600000" + "070090200" + "050007000" +
-				"000045700" + "000100030" + "001000068" + "008500010" + "090000400"),
-			expected: new("812753649" + "943682175" + "675491283" + "154237896" +
-				"369845721" + "287169534" + "521974368" + "438526917" + "796318452"),
+			input: new("050090000" + "018400000" + "370008000" +
+				"007002530" + "530000082" + "082500900" +
+				"000900045" + "000003860" + "000080020"),
+			expected: new("254397618" + "618425397" + "379618254" +
+				"197842536" + "536179482" + "482536971" +
+				"823961745" + "741253869" + "965784123"),
 			expectedError: nil,
 		},
 		{
@@ -66,13 +70,14 @@ func TestSolve(t *testing.T) {
 			expectedError: nil,
 		},
 		{
-			// The "9x9 with backtracking" puzzle with (0,1) pinned to 2,
-			// whereas its unique solution needs 1 there. Solve must exhaust the
+			// The "9x9 with backtracking" puzzle with (0,0) pinned to 4,
+			// whereas its unique solution needs 2 there. Solve must exhaust the
 			// search and fail, unlike "4x4 with no solution" which is rejected
 			// before the search begins.
 			name: "9x9 unsolvable, fails during search",
-			input: new("820000000" + "003600000" + "070090200" + "050007000" +
-				"000045700" + "000100030" + "001000068" + "008500010" + "090000400"),
+			input: new("450090000" + "018400000" + "370008000" +
+				"007002530" + "530000082" + "082500900" +
+				"000900045" + "000003860" + "000080020"),
 			expected:      nil,
 			expectedError: solver.ErrSolutionNotFound,
 		},
