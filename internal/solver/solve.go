@@ -8,6 +8,19 @@ import (
 	"github.com/tkngch/sudoku-go/internal/puzzle"
 )
 
+// solver solves a single Sudoku grid. It holds scratch buffers that the hot
+// propagation loop reuses across the whole search, so each buffer is grown at
+// most once per solve instead of once per step.
+//
+// Solve creates a fresh solver per call, so a solver is never shared across
+// goroutines and needs no synchronization.
+type solver struct {
+	changed       []puzzle.Cell     // removeInvalidCandidatesFromPeers output
+	hiddenSingles []puzzle.Cell     // revealHiddenSingles output
+	positions     []puzzle.Position // revealHiddenSingles per-unit scratch
+	worklist      []puzzle.Cell     // removeInvalidCandidates BFS queue
+}
+
 var (
 	// ErrInvalidGrid is returned by Solve when the grid is nil or contains a
 	// cell with no candidate values.
@@ -37,6 +50,18 @@ func Solve(ctx context.Context, grid *puzzle.Grid) (*puzzle.Grid, error) {
 		return nil, fmt.Errorf("solve: %w", err)
 	}
 
+	cellCount := grid.CellCount()
+	sudokuSolver := &solver{
+		changed:       make([]puzzle.Cell, 0, cellCount),
+		hiddenSingles: make([]puzzle.Cell, 0, cellCount),
+		positions:     make([]puzzle.Position, 0, cellCount),
+		worklist:      make([]puzzle.Cell, 0, cellCount),
+	}
+
+	return sudokuSolver.solve(ctx, grid)
+}
+
+func (s *solver) solve(ctx context.Context, grid *puzzle.Grid) (*puzzle.Grid, error) {
 	grid = grid.Clone()
 
 	knownCells := make([]puzzle.Cell, 0)
@@ -54,38 +79,48 @@ func Solve(ctx context.Context, grid *puzzle.Grid) (*puzzle.Grid, error) {
 		}
 	}
 
-	ok := removeInvalidCandidates(grid, knownCells)
+	ok := s.removeInvalidCandidates(grid, knownCells...)
 	if !ok {
 		return nil, ErrSolutionNotFound
 	}
 
-	return searchSolution(ctx, grid)
+	return s.searchSolution(ctx, grid)
 }
 
 // removeInvalidCandidates propagates the values of the revealed cells.
 // removeInvalidCandidates returns false when the grid becomes unsolvable:
 // either a peer is left with no candidates, or no peer can hold an eliminated
 // value.
-func removeInvalidCandidates(grid *puzzle.Grid, newlyRevealedCells []puzzle.Cell) bool {
-	for len(newlyRevealedCells) > 0 {
-		revealed := newlyRevealedCells[0]
-		newlyRevealedCells = newlyRevealedCells[1:]
+func (s *solver) removeInvalidCandidates(
+	grid *puzzle.Grid,
+	newlyRevealedCells ...puzzle.Cell,
+) bool {
+	// Reuse the scratch buffer for performance: we don't want to allocate a new
+	// slice here.
+	s.worklist = append(s.worklist[:0], newlyRevealedCells...)
 
-		changedCells := removeInvalidCandidatesFromPeers(grid, revealed)
-		for _, cell := range changedCells {
-			switch cell.Candidates().Count() {
+	// note: len(s.worklist) is re-evaluated every iteration, so if we append
+	// to s.worklist within the loop, iteration reaches the newly appended
+	// items.
+	for idx := 0; idx < len(s.worklist); idx++ {
+		revealed := s.worklist[idx]
+
+		s.removeInvalidCandidatesFromPeers(grid, revealed)
+
+		for _, changed := range s.changed {
+			switch changed.Candidates().Count() {
 			case 0:
 				return false
 			case 1:
-				newlyRevealedCells = append(newlyRevealedCells, cell)
+				s.worklist = append(s.worklist, changed)
 			}
 
-			hiddenSingles, ok := revealHiddenSingles(grid, cell.Position(), revealed.Candidates())
+			ok := s.revealHiddenSingles(grid, changed.Position(), revealed.Candidates())
 			if !ok {
 				return false
 			}
 
-			newlyRevealedCells = append(newlyRevealedCells, hiddenSingles...)
+			s.worklist = append(s.worklist, s.hiddenSingles...)
 		}
 	}
 
@@ -93,9 +128,11 @@ func removeInvalidCandidates(grid *puzzle.Grid, newlyRevealedCells []puzzle.Cell
 }
 
 // removeInvalidCandidatesFromPeers removes revealed's value from revealed's
-// peers. It returns the peers whose candidate values have changed.
-func removeInvalidCandidatesFromPeers(grid *puzzle.Grid, revealed puzzle.Cell) []puzzle.Cell {
-	changed := make([]puzzle.Cell, 0)
+// peers, recording the peers whose candidates changed in s.changed.
+func (s *solver) removeInvalidCandidatesFromPeers(grid *puzzle.Grid, revealed puzzle.Cell) {
+	// Reuse the scratch buffer for performance: we don't want to allocate a new
+	// slice here.
+	s.changed = s.changed[:0]
 
 	peers := grid.AllPeersOf(revealed.Position())
 	for idx := range peers.Len() {
@@ -108,63 +145,55 @@ func removeInvalidCandidatesFromPeers(grid *puzzle.Grid, revealed puzzle.Cell) [
 		}
 
 		grid.Set(position, reduced)
-		changed = append(changed, puzzle.NewCell(position, reduced))
+		s.changed = append(s.changed, puzzle.NewCell(position, reduced))
 	}
-
-	return changed
 }
 
 // After a candidate value is eliminated from the position, this eliminated
 // candidate value should be filled in on one of its peers. If there is only one
 // cell in the peers that can take the eliminated candidate value, fill that
 // cell with it.
-func revealHiddenSingles(
+func (s *solver) revealHiddenSingles(
 	grid *puzzle.Grid,
 	position puzzle.Position,
 	eliminatedCandidates puzzle.Candidates,
-) ([]puzzle.Cell, bool) {
-	hiddenSingles := make([]puzzle.Cell, 0)
+) bool {
+	s.hiddenSingles = s.hiddenSingles[:0]
+
 	if eliminatedCandidates.Count() != 1 {
 		// Unreachable in practice: callers only pass the candidate value of
 		// revealed cell, which has only one candidate value. This defensive
 		// guard is here to highlight the assumption that the eliminated
 		// candidates only have one value.
-		return hiddenSingles, true
+		return true
 	}
 
-	positionsWithEliminatedCandidates := make([]puzzle.Position, 0)
 	for _, peers := range grid.EachPeersOf(position) {
-		positionsWithEliminatedCandidates = positionsWithEliminatedCandidates[:0]
+		s.positions = s.positions[:0]
 
 		for idx := range peers.Len() {
 			position := peers.At(idx)
 			if grid.CandidatesAt(position).Contains(eliminatedCandidates) {
-				positionsWithEliminatedCandidates = append(
-					positionsWithEliminatedCandidates,
-					position,
-				)
-				if len(positionsWithEliminatedCandidates) > 1 {
+				s.positions = append(s.positions, position)
+				if len(s.positions) > 1 {
 					break
 				}
 			}
 		}
 
-		switch len(positionsWithEliminatedCandidates) {
+		switch len(s.positions) {
 		case 0:
 			// None of the peers can take the eliminated value, so the value
 			// should not have been eliminated.
-			return nil, false
+			return false
 
 		case 1:
 			// Skip the cell which has only the eliminated value as its candidate values.
-			if grid.CandidatesAt(positionsWithEliminatedCandidates[0]) != eliminatedCandidates {
-				grid.Set(positionsWithEliminatedCandidates[0], eliminatedCandidates)
-				hiddenSingles = append(
-					hiddenSingles,
-					puzzle.NewCell(
-						positionsWithEliminatedCandidates[0],
-						eliminatedCandidates,
-					),
+			if grid.CandidatesAt(s.positions[0]) != eliminatedCandidates {
+				grid.Set(s.positions[0], eliminatedCandidates)
+				s.hiddenSingles = append(
+					s.hiddenSingles,
+					puzzle.NewCell(s.positions[0], eliminatedCandidates),
 				)
 			}
 
@@ -172,10 +201,10 @@ func revealHiddenSingles(
 		}
 	}
 
-	return hiddenSingles, true
+	return true
 }
 
-func searchSolution(ctx context.Context, grid *puzzle.Grid) (*puzzle.Grid, error) {
+func (s *solver) searchSolution(ctx context.Context, grid *puzzle.Grid) (*puzzle.Grid, error) {
 	err := ctx.Err()
 	if err != nil {
 		return nil, fmt.Errorf("search solution: %w", err)
@@ -194,12 +223,9 @@ func searchSolution(ctx context.Context, grid *puzzle.Grid) (*puzzle.Grid, error
 		newGrid := grid.Clone()
 		newGrid.Set(cell.Position(), value)
 
-		ok := removeInvalidCandidates(
-			newGrid,
-			[]puzzle.Cell{puzzle.NewCell(cell.Position(), value)},
-		)
+		ok := s.removeInvalidCandidates(newGrid, puzzle.NewCell(cell.Position(), value))
 		if ok {
-			solution, err := searchSolution(ctx, newGrid)
+			solution, err := s.searchSolution(ctx, newGrid)
 			if err == nil {
 				return solution, nil
 			}

@@ -143,6 +143,8 @@ func TestSolveBenchmarkingPuzzles(t *testing.T) {
 }
 
 func BenchmarkSolve(b *testing.B) {
+	b.ReportAllocs()
+
 	for _, testCase := range benchmarkingPuzzles() {
 		b.Run(
 			testCase.name,
