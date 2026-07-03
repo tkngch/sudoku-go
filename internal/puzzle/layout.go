@@ -22,22 +22,27 @@ var ErrInvalidCellCount = errors.New("invalid cell count")
 // NewLayoutForCellCount returns the Layout whose grid holds cellCount cells.
 // It returns ErrInvalidCellCount when cellCount is not supported.
 func NewLayoutForCellCount(cellCount int) (Layout, error) {
-	// cellCount is gridSize²; block dims (rows, cols) multiply to gridsize.
-	switch cellCount {
-	case 144: // 144=(4×3)²
-		return newLayout(4, 3), nil
-	case 81: // 81=(3×3)²
-		return newLayout(3, 3), nil
-	case 36: // 36=(2×3)²
-		return newLayout(2, 3), nil
-	case 16: // 16=(2×2)²
-		return newLayout(2, 2), nil
-
-	default:
-		err := fmt.Errorf("new layout from cell count [%d]: %w", cellCount, ErrInvalidCellCount)
-
-		return Layout{}, err
+	// Supported block dimensions (rows × cols). A grid has gridSize² cells,
+	// where gridSize = blockRowCount × blockColCount.
+	supportedLayouts := []struct {
+		blockRowCount, blockColCount int
+	}{
+		{4, 3}, // 12×12 grid, 144 cells
+		{3, 3}, //   9×9 grid,  81 cells
+		{2, 3}, //   6×6 grid,  36 cells
+		{2, 2}, //   4×4 grid,  16 cells
 	}
+
+	for _, dims := range supportedLayouts {
+		gridSize := dims.blockRowCount * dims.blockColCount
+		if gridSize*gridSize == cellCount {
+			return newLayout(dims.blockRowCount, dims.blockColCount), nil
+		}
+	}
+
+	err := fmt.Errorf("new layout from cell count [%d]: %w", cellCount, ErrInvalidCellCount)
+
+	return Layout{}, err
 }
 
 func newLayout(r, c int) Layout {

@@ -7,7 +7,6 @@ linters:
     - wsl  # deprecated
     - depguard
     - dupl
-    - mnd
   settings:
     goconst:
       ignore-tests: true

@@ -76,10 +76,13 @@ func (g *Grid) Render() string {
 		return ""
 	}
 
+	// maxRowElementsPerCell over-estimates the strings a rendered cell adds to
+	// a row (its value plus block separators), for slice pre-allocation.
+	const maxRowElementsPerCell = 3
+
 	rowsAsString := make([]string, 0, g.layout.GridSize())
 
-	row := make([]string, 0, g.layout.GridSize()*3)
-
+	row := make([]string, 0, g.layout.GridSize()*maxRowElementsPerCell)
 	for cell := range g.Cells() {
 		if cell.Position().col == 0 && g.layout.isFirstRowInBlock(cell.Position()) {
 			rowsAsString = append(rowsAsString, g.rowSeparator())
@@ -104,11 +107,13 @@ func (g *Grid) Render() string {
 }
 
 func (g *Grid) rowSeparator() string {
+	const dashesPerColumn = 2
+
 	blockCount := g.layout.GridSize() / g.layout.blockColCount
 
 	separators := make([]string, blockCount)
 	for i := range blockCount {
-		separators[i] = strings.Repeat("-", g.layout.blockColCount*2+1)
+		separators[i] = strings.Repeat("-", g.layout.blockColCount*dashesPerColumn+1)
 	}
 
 	return "+" + strings.Join(separators, "+") + "+"
@@ -123,10 +128,10 @@ func toInt(char byte) (int, bool) {
 		return int(char - '0'), true
 
 	case 'a' <= char && char <= 'g':
-		return int(char - 'a' + 10), true
+		return int(char - 'a' + firstLetterValue), true
 
 	case 'A' <= char && char <= 'G':
-		return int(char - 'A' + 10), true
+		return int(char - 'A' + firstLetterValue), true
 	}
 
 	return 0, false
