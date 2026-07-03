@@ -1,18 +1,33 @@
 package puzzle
 
 import (
-	"iter"
 	"slices"
 )
 
 // Peers holds the positions that share a row, column, or block with a given
 // cell.
 type Peers struct {
-	row      []Position
-	column   []Position
-	block    []Position
-	allPeers []Position
+	row      PositionList
+	column   PositionList
+	block    PositionList
+	allPeers PositionList
 }
+
+// PositionList is a read-only view over a precomputed peer slice: length and
+// indexed access, with no exported way to reach or mutate the backing array.
+type PositionList struct{ s []Position }
+
+// NewPositionList clones positions and returns PositionList. So the returned
+// list would not change when the input slice changes.
+func NewPositionList(positions []Position) PositionList {
+	return PositionList{slices.Clone(positions)}
+}
+
+// Len returns the number of elements in positionList.
+func (l PositionList) Len() int { return len(l.s) }
+
+// At returns Position at idx.
+func (l PositionList) At(idx int) Position { return l.s[idx] }
 
 // NewEmptyPeers returns a Peers with no members.
 func NewEmptyPeers() Peers {
@@ -35,30 +50,30 @@ func NewPeers(rowPeers, colPeers, blockPeers []Position) Peers {
 	}
 
 	return Peers{
-		row:      slices.Clone(rowPeers),
-		column:   slices.Clone(colPeers),
-		block:    slices.Clone(blockPeers),
-		allPeers: allPeers,
+		row:      NewPositionList(rowPeers),
+		column:   NewPositionList(colPeers),
+		block:    NewPositionList(blockPeers),
+		allPeers: NewPositionList(allPeers),
 	}
 }
 
-// All returns a single iterator over the peers. Duplicates are removed from the
+// All returns a positionList with the peers. Duplicates are removed from the
 // three peers (row, column, and block).
-func (p Peers) All() iter.Seq[Position] {
-	return slices.Values(p.allPeers)
+func (p Peers) All() PositionList {
+	return p.allPeers
 }
 
-// Row returns an iterator over the row peers.
-func (p Peers) Row() iter.Seq[Position] {
-	return slices.Values(p.row)
+// Row returns a positionList with the row peers.
+func (p Peers) Row() PositionList {
+	return p.row
 }
 
-// Col returns an iterator over the column peers.
-func (p Peers) Col() iter.Seq[Position] {
-	return slices.Values(p.column)
+// Col returns a positionList with the column peers.
+func (p Peers) Col() PositionList {
+	return p.column
 }
 
-// Block returns an iterator over the block peers.
-func (p Peers) Block() iter.Seq[Position] {
-	return slices.Values(p.block)
+// Block returns a positionList with the block peers.
+func (p Peers) Block() PositionList {
+	return p.block
 }

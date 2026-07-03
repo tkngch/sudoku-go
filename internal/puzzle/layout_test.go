@@ -1,7 +1,6 @@
 package puzzle_test
 
 import (
-	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -193,9 +192,9 @@ func TestLayoutPeersOf(t *testing.T) {
 				[]puzzle.Position{
 					puzzle.NewPosition(2, 0),
 					puzzle.NewPosition(2, 1),
-					puzzle.NewPosition(3, 2),
 					puzzle.NewPosition(3, 0),
 					puzzle.NewPosition(3, 1),
+					puzzle.NewPosition(3, 2),
 				},
 			),
 		},
@@ -217,25 +216,20 @@ func TestLayoutPeersOf(t *testing.T) {
 				require.NoError(t, err)
 
 				peers := layout.PeersOf(testCase.pos)
-				assert.ElementsMatch(
-					t,
-					slices.Collect(testCase.expected.Row()),
-					slices.Collect(peers.Row()),
-					"row peers",
-				)
-				assert.ElementsMatch(
-					t,
-					slices.Collect(testCase.expected.Col()),
-					slices.Collect(peers.Col()),
-					"column peers",
-				)
-				assert.ElementsMatch(
-					t,
-					slices.Collect(testCase.expected.Block()),
-					slices.Collect(peers.Block()),
-					"block peers",
-				)
+				assertEqualPositionList(t, testCase.expected.Row(), peers.Row(), "row peers")
+				assertEqualPositionList(t, testCase.expected.Col(), peers.Col(), "column peers")
+				assertEqualPositionList(t, testCase.expected.Block(), peers.Block(), "block peers")
 			},
 		)
+	}
+}
+
+func assertEqualPositionList(t *testing.T, expected, actual puzzle.PositionList, msg string) {
+	t.Helper()
+
+	assert.Equalf(t, expected.Len(), actual.Len(), "%s: length", msg)
+
+	for idx := range expected.Len() {
+		assert.Equalf(t, expected.At(idx), actual.At(idx), "%s: index %d", msg, idx)
 	}
 }

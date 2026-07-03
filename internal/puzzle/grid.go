@@ -38,30 +38,25 @@ func NewGrid(cells []Candidates, layout Layout) (*Grid, error) {
 	return &grid, nil
 }
 
-// EachPeersOf returns three separate iterators over the cells that share,
-// respectively, the row, the column, and the block of the provided position (in
-// that order), each excluding the cell at position itself.
-func (g *Grid) EachPeersOf(position Position) [3]iter.Seq[Cell] {
+// EachPeersOf returns three separate list of positions over the cells that
+// share, respectively, the row, the column, and the block of the provided
+// position (in that order), each excluding the cell at position itself.
+func (g *Grid) EachPeersOf(position Position) [3]PositionList {
 	peers := g.layout.PeersOf(position)
 
-	return [3]iter.Seq[Cell]{
-		g.cellsAt(peers.Row()),
-		g.cellsAt(peers.Col()),
-		g.cellsAt(peers.Block()),
-	}
+	return [3]PositionList{peers.Row(), peers.Col(), peers.Block()}
 }
 
-// AllPeersOf returns an iterator over the distinct cells that share the row,
-// column or block. It excludes the cell at the provided position, because a
-// cell cannot be a peer of itself.
-func (g *Grid) AllPeersOf(position Position) iter.Seq[Cell] {
-	return func(yield func(Cell) bool) {
-		for peer := range g.layout.PeersOf(position).All() {
-			if !yield(g.cellAt(peer)) {
-				return
-			}
-		}
-	}
+// AllPeersOf returns a list of positions over the distinct cells that share the
+// row, column or block. It excludes the cell at the provided position, because
+// a cell cannot be a peer of itself.
+func (g *Grid) AllPeersOf(position Position) PositionList {
+	return g.layout.PeersOf(position).All()
+}
+
+// CandidatesAt returns the candidate values at the position.
+func (g *Grid) CandidatesAt(p Position) Candidates {
+	return g.cellCandidates[g.layout.RowMajorIndex(p)]
 }
 
 // Cells returns an iterator over every cell of the grid in row-major order.
@@ -95,20 +90,4 @@ func (g *Grid) Set(position Position, newCandidates Candidates) {
 
 	index := g.layout.RowMajorIndex(position)
 	g.cellCandidates[index] = newCandidates
-}
-
-func (g *Grid) cellAt(position Position) Cell {
-	candidates := g.cellCandidates[g.layout.RowMajorIndex(position)]
-
-	return NewCell(position, candidates)
-}
-
-func (g *Grid) cellsAt(positions iter.Seq[Position]) iter.Seq[Cell] {
-	return func(yield func(Cell) bool) {
-		for position := range positions {
-			if !yield(g.cellAt(position)) {
-				return
-			}
-		}
-	}
 }

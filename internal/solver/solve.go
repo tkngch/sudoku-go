@@ -97,14 +97,18 @@ func removeInvalidCandidates(grid *puzzle.Grid, newlyRevealedCells []puzzle.Cell
 func removeInvalidCandidatesFromPeers(grid *puzzle.Grid, revealed puzzle.Cell) []puzzle.Cell {
 	changed := make([]puzzle.Cell, 0)
 
-	for peer := range grid.AllPeersOf(revealed.Position()) {
-		reduced := peer.Candidates().Remove(revealed.Candidates())
-		if reduced == peer.Candidates() {
+	peers := grid.AllPeersOf(revealed.Position())
+	for idx := range peers.Len() {
+		position := peers.At(idx)
+		candidates := grid.CandidatesAt(position)
+
+		reduced := candidates.Remove(revealed.Candidates())
+		if reduced == candidates {
 			continue
 		}
 
-		grid.Set(peer.Position(), reduced)
-		changed = append(changed, puzzle.NewCell(peer.Position(), reduced))
+		grid.Set(position, reduced)
+		changed = append(changed, puzzle.NewCell(position, reduced))
 	}
 
 	return changed
@@ -128,17 +132,24 @@ func revealHiddenSingles(
 		return hiddenSingles, true
 	}
 
-	cellsWithEliminatedCandidates := make([]puzzle.Cell, 0)
+	positionsWithEliminatedCandidates := make([]puzzle.Position, 0)
 	for _, peers := range grid.EachPeersOf(position) {
-		cellsWithEliminatedCandidates = cellsWithEliminatedCandidates[:0]
+		positionsWithEliminatedCandidates = positionsWithEliminatedCandidates[:0]
 
-		for peer := range peers {
-			if peer.Candidates().Contains(eliminatedCandidates) {
-				cellsWithEliminatedCandidates = append(cellsWithEliminatedCandidates, peer)
+		for idx := range peers.Len() {
+			position := peers.At(idx)
+			if grid.CandidatesAt(position).Contains(eliminatedCandidates) {
+				positionsWithEliminatedCandidates = append(
+					positionsWithEliminatedCandidates,
+					position,
+				)
+				if len(positionsWithEliminatedCandidates) > 1 {
+					break
+				}
 			}
 		}
 
-		switch len(cellsWithEliminatedCandidates) {
+		switch len(positionsWithEliminatedCandidates) {
 		case 0:
 			// None of the peers can take the eliminated value, so the value
 			// should not have been eliminated.
@@ -146,12 +157,12 @@ func revealHiddenSingles(
 
 		case 1:
 			// Skip the cell which has only the eliminated value as its candidate values.
-			if cellsWithEliminatedCandidates[0].Candidates() != eliminatedCandidates {
-				grid.Set(cellsWithEliminatedCandidates[0].Position(), eliminatedCandidates)
+			if grid.CandidatesAt(positionsWithEliminatedCandidates[0]) != eliminatedCandidates {
+				grid.Set(positionsWithEliminatedCandidates[0], eliminatedCandidates)
 				hiddenSingles = append(
 					hiddenSingles,
 					puzzle.NewCell(
-						cellsWithEliminatedCandidates[0].Position(),
+						positionsWithEliminatedCandidates[0],
 						eliminatedCandidates,
 					),
 				)
@@ -245,8 +256,9 @@ func isSolved(grid *puzzle.Grid) bool {
 			return false
 		}
 
-		for peer := range grid.AllPeersOf(cell.Position()) {
-			if cell.Candidates() == peer.Candidates() {
+		peers := grid.AllPeersOf(cell.Position())
+		for idx := range peers.Len() {
+			if cell.Candidates() == grid.CandidatesAt(peers.At(idx)) {
 				return false
 			}
 		}
