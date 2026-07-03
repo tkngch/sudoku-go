@@ -205,14 +205,15 @@ func requireValidSolution(t *testing.T, input, solution *puzzle.Grid) {
 			cell.Position(),
 		)
 
-		for peer := range solution.AllPeersOf(cell.Position()) {
+		peers := solution.AllPeersOf(cell.Position())
+		for idx := range peers.Len() {
 			assert.NotEqualf(
 				t,
 				cell.Candidates(),
-				peer.Candidates(),
+				solution.CandidatesAt(peers.At(idx)),
 				"cells %v and %v share a value in the expected grid",
 				cell.Position(),
-				peer.Position(),
+				peers.At(idx),
 			)
 		}
 	}

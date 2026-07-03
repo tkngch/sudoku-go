@@ -1,7 +1,6 @@
 package puzzle_test
 
 import (
-	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -29,21 +28,21 @@ func TestNewPeers(t *testing.T) {
 
 	peers := puzzle.NewPeers(rowPeers, colPeers, blockPeers)
 
-	assert.Equal(t, rowPeers, slices.Collect(peers.Row()), "row peers")
-	assert.Equal(t, colPeers, slices.Collect(peers.Col()), "column peers")
-	assert.Equal(t, blockPeers, slices.Collect(peers.Block()), "block peers")
+	assertEqualPositionList(t, puzzle.NewPositionList(rowPeers), peers.Row(), "row peers")
+	assertEqualPositionList(t, puzzle.NewPositionList(colPeers), peers.Col(), "column peers")
+	assertEqualPositionList(t, puzzle.NewPositionList(blockPeers), peers.Block(), "block peers")
 
-	expected := []puzzle.Position{
-		puzzle.NewPosition(0, 1),
-		puzzle.NewPosition(0, 2),
-		puzzle.NewPosition(1, 0),
-		puzzle.NewPosition(2, 0),
-		puzzle.NewPosition(1, 1),
-	}
-	actual := slices.Collect(peers.All())
+	expected := puzzle.NewPositionList(
+		[]puzzle.Position{
+			puzzle.NewPosition(0, 1),
+			puzzle.NewPosition(0, 2),
+			puzzle.NewPosition(1, 0),
+			puzzle.NewPosition(2, 0),
+			puzzle.NewPosition(1, 1),
+		})
+	actual := peers.All()
 
-	assert.ElementsMatch(t, expected, actual, "deduplicated peers")
-	assert.Len(t, actual, len(expected), "All must not contain duplicates")
+	assertEqualPositionList(t, expected, actual, "peers all")
 }
 
 func TestNewEmptyPeers(t *testing.T) {
@@ -51,8 +50,8 @@ func TestNewEmptyPeers(t *testing.T) {
 
 	peers := puzzle.NewEmptyPeers()
 
-	assert.Empty(t, slices.Collect(peers.Row()))
-	assert.Empty(t, slices.Collect(peers.Col()))
-	assert.Empty(t, slices.Collect(peers.Block()))
-	assert.Empty(t, slices.Collect(peers.All()))
+	assert.Equal(t, 0, peers.Row().Len(), "row length")
+	assert.Equal(t, 0, peers.Col().Len(), "col length")
+	assert.Equal(t, 0, peers.Block().Len(), "block length")
+	assert.Equal(t, 0, peers.All().Len(), "all length")
 }
