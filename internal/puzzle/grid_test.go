@@ -42,7 +42,7 @@ func TestNewGrid(t *testing.T) {
 	}
 }
 
-func TestGridSet(t *testing.T) {
+func TestGridUpdate(t *testing.T) {
 	t.Parallel()
 
 	t.Run(
@@ -55,7 +55,7 @@ func TestGridSet(t *testing.T) {
 			grid := newGrid(t, slices.Repeat([][]int{{1, 2, 3, 4}}, 4), layout)
 
 			newCandidate := puzzle.NewSingleCandidate(9)
-			grid.Set(puzzle.NewPosition(1, 0), newCandidate)
+			grid.Update(puzzle.NewPosition(1, 0), newCandidate)
 
 			cells := slices.Collect(grid.Cells())
 			assert.Equal(t, newCandidate, cells[4].Candidates(), "cell is updated in place")
@@ -87,7 +87,7 @@ func TestGridSet(t *testing.T) {
 			grid := newGrid(t, slices.Repeat([][]int{{1, 2, 3, 4}}, 4), layout)
 
 			assert.NotPanics(t, func() {
-				grid.Set(puzzle.NewPosition(0, 2), puzzle.NewSingleCandidate(9))
+				grid.Update(puzzle.NewPosition(0, 2), puzzle.NewSingleCandidate(9))
 			})
 		},
 	)
@@ -106,7 +106,7 @@ func TestGridClone(t *testing.T) {
 		original := newGrid(t, rows, layout)
 		clone := original.Clone()
 
-		clone.Set(puzzle.NewPosition(0, 0), puzzle.NewSingleCandidate(2))
+		clone.Update(puzzle.NewPosition(0, 0), puzzle.NewSingleCandidate(2))
 
 		originalCells := slices.Collect(original.Cells())
 		cloneCells := slices.Collect(clone.Cells())
@@ -121,7 +121,7 @@ func TestGridClone(t *testing.T) {
 		original := newGrid(t, rows, layout)
 		clone := original.Clone()
 
-		original.Set(puzzle.NewPosition(0, 0), puzzle.NewSingleCandidate(2))
+		original.Update(puzzle.NewPosition(0, 0), puzzle.NewSingleCandidate(2))
 
 		originalCells := slices.Collect(original.Cells())
 		cloneCells := slices.Collect(clone.Cells())

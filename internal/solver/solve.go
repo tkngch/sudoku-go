@@ -62,11 +62,11 @@ func Solve(ctx context.Context, grid *puzzle.Grid) (*puzzle.Grid, error) {
 }
 
 func (s *solver) solve(ctx context.Context, grid *puzzle.Grid) (*puzzle.Grid, error) {
-	grid = grid.Clone()
+	control := puzzle.NewGridControl(grid.Clone())
 
 	knownCells := make([]puzzle.Cell, 0)
 
-	for cell := range grid.Cells() {
+	for cell := range control.Cells() {
 		switch cell.Candidates().Count() {
 		case 0:
 			// A cell with no candidates cannot hold any value, so the grid must
@@ -79,12 +79,12 @@ func (s *solver) solve(ctx context.Context, grid *puzzle.Grid) (*puzzle.Grid, er
 		}
 	}
 
-	ok := s.removeInvalidCandidates(grid, knownCells...)
+	ok := s.removeInvalidCandidates(control, knownCells...)
 	if !ok {
 		return nil, ErrSolutionNotFound
 	}
 
-	return s.searchSolution(ctx, grid)
+	return s.searchSolution(ctx, control)
 }
 
 // removeInvalidCandidates propagates the values of the revealed cells.
@@ -92,7 +92,7 @@ func (s *solver) solve(ctx context.Context, grid *puzzle.Grid) (*puzzle.Grid, er
 // either a peer is left with no candidates, or no peer can hold an eliminated
 // value.
 func (s *solver) removeInvalidCandidates(
-	grid *puzzle.Grid,
+	grid *puzzle.GridControl,
 	newlyRevealedCells ...puzzle.Cell,
 ) bool {
 	// Reuse the scratch buffer for performance: we don't want to allocate a new
@@ -129,7 +129,7 @@ func (s *solver) removeInvalidCandidates(
 
 // removeInvalidCandidatesFromPeers removes revealed's value from revealed's
 // peers, recording the peers whose candidates changed in s.changed.
-func (s *solver) removeInvalidCandidatesFromPeers(grid *puzzle.Grid, revealed puzzle.Cell) {
+func (s *solver) removeInvalidCandidatesFromPeers(grid *puzzle.GridControl, revealed puzzle.Cell) {
 	// Reuse the scratch buffer for performance: we don't want to allocate a new
 	// slice here.
 	s.changed = s.changed[:0]
@@ -144,7 +144,7 @@ func (s *solver) removeInvalidCandidatesFromPeers(grid *puzzle.Grid, revealed pu
 			continue
 		}
 
-		grid.Set(position, reduced)
+		grid.Update(position, candidates, reduced)
 		s.changed = append(s.changed, puzzle.NewCell(position, reduced))
 	}
 }
@@ -154,7 +154,7 @@ func (s *solver) removeInvalidCandidatesFromPeers(grid *puzzle.Grid, revealed pu
 // cell in the peers that can take the eliminated candidate value, fill that
 // cell with it.
 func (s *solver) revealHiddenSingles(
-	grid *puzzle.Grid,
+	grid *puzzle.GridControl,
 	position puzzle.Position,
 	eliminatedCandidates puzzle.Candidates,
 ) bool {
@@ -189,8 +189,9 @@ func (s *solver) revealHiddenSingles(
 
 		case 1:
 			// Skip the cell which has only the eliminated value as its candidate values.
-			if grid.CandidatesAt(s.positions[0]) != eliminatedCandidates {
-				grid.Set(s.positions[0], eliminatedCandidates)
+			current := grid.CandidatesAt(s.positions[0])
+			if current != eliminatedCandidates {
+				grid.Update(s.positions[0], current, eliminatedCandidates)
 				s.hiddenSingles = append(
 					s.hiddenSingles,
 					puzzle.NewCell(s.positions[0], eliminatedCandidates),
@@ -204,29 +205,35 @@ func (s *solver) revealHiddenSingles(
 	return true
 }
 
-func (s *solver) searchSolution(ctx context.Context, grid *puzzle.Grid) (*puzzle.Grid, error) {
+func (s *solver) searchSolution(
+	ctx context.Context,
+	grid *puzzle.GridControl,
+) (*puzzle.Grid, error) {
 	err := ctx.Err()
 	if err != nil {
 		return nil, fmt.Errorf("search solution: %w", err)
 	}
 
-	cell, isFound := unfilledCellWithFewestCandidates(grid)
+	cell, isFound := unfilledCellWithFewestCandidates(grid.Grid)
 	if !isFound {
-		if isSolved(grid) {
-			return grid, nil
+		if isSolved(grid.Grid) {
+			return grid.Grid, nil
 		}
 
 		return nil, ErrSolutionNotFound
 	}
 
 	for value := range cell.Candidates().All() {
-		newGrid := grid.Clone()
-		newGrid.Set(cell.Position(), value)
+		grid.Checkpoint()
+		grid.Update(cell.Position(), cell.Candidates(), value)
 
-		ok := s.removeInvalidCandidates(newGrid, puzzle.NewCell(cell.Position(), value))
+		ok := s.removeInvalidCandidates(grid, puzzle.NewCell(cell.Position(), value))
+
 		if ok {
-			solution, err := s.searchSolution(ctx, newGrid)
+			solution, err := s.searchSolution(ctx, grid)
 			if err == nil {
+				grid.CommitUpdates()
+
 				return solution, nil
 			}
 
@@ -238,6 +245,8 @@ func (s *solver) searchSolution(ctx context.Context, grid *puzzle.Grid) (*puzzle
 				return nil, err
 			}
 		}
+
+		grid.RestoreCheckpoint()
 	}
 
 	return nil, ErrSolutionNotFound

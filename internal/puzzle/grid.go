@@ -83,14 +83,13 @@ func (g *Grid) Clone() *Grid {
 	}
 }
 
-// Set alters the cell at position in place; it is a noop if the position is out
+// Update alters the cell at position in place; it is a noop if the position is out
 // of range. Because copies of a *Grid alias the same cells, Set also mutates
 // every alias. Call Clone first to keep the original intact.
-func (g *Grid) Set(position Position, newCandidates Candidates) {
-	if !g.layout.IsOnGrid(position) {
-		return
-	}
-
+func (g *Grid) Update(position Position, newCandidates Candidates) {
+	// if !g.layout.IsOnGrid(position) {
+	// 	return
+	// }
 	index := g.layout.RowMajorIndex(position)
 	g.cellCandidates[index] = newCandidates
 }

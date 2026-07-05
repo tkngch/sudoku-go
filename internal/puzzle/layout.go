@@ -13,6 +13,7 @@ import (
 type Layout struct {
 	blockRowCount, blockColCount int
 	peers                        []Peers
+	gridSize                     int
 }
 
 // ErrInvalidCellCount is returned by NewLayoutForCellCount when no supported
@@ -50,6 +51,7 @@ func newLayout(r, c int) Layout {
 		blockRowCount: r,
 		blockColCount: c,
 		peers:         nil, // computed below, needs block dims set first
+		gridSize:      r * c,
 	}
 	layout.peers = layout.allPeers()
 
@@ -58,7 +60,9 @@ func newLayout(r, c int) Layout {
 
 // GridSize returns the number of rows or columns in a grid. A grid is
 // square-shaped, so its number of rows equals to its number of columns.
-func (l Layout) GridSize() int { return l.blockRowCount * l.blockColCount }
+func (l Layout) GridSize() int {
+	return l.gridSize
+}
 
 // PeersOf returns iterators over the precomputed peers. A peer shares the row,
 // the column or the block with the provided position. When the provided
