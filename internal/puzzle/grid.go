@@ -59,6 +59,9 @@ func (g *Grid) CandidatesAt(p Position) Candidates {
 	return g.cellCandidates[g.layout.RowMajorIndex(p)]
 }
 
+// CellCount returns the number of cells in the grid.
+func (g *Grid) CellCount() int { return len(g.cellCandidates) }
+
 // Cells returns an iterator over every cell of the grid in row-major order.
 func (g *Grid) Cells() iter.Seq[Cell] {
 	return func(yield func(Cell) bool) {
