@@ -20,7 +20,6 @@ var ErrInvalidCharacter = errors.New("invalid character")
 // (values 10-16) are givens. Parse returns ErrInvalidCellCount or
 // ErrInvalidCharacter for malformed input.
 func Parse(input string) (*Grid, error) {
-	// Drop whitespaces from the input
 	compact := strings.Join(strings.Fields(input), "")
 	cellCount := len(compact)
 

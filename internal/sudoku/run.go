@@ -114,10 +114,10 @@ func newFlagSet(stderr io.Writer) (*flag.FlagSet, *time.Duration) {
 }
 
 // resolveInput returns the puzzle input from the sole argument or, when no
-// argument is given, from stdin. The input is passed on as it is read, and
-// resolveInput returns errUsage when the arguments are misused (no puzzle while
-// stdin is a terminal, or more than one argument), or the read error (including
-// a ctx cancellation) when stdin cannot be read.
+// argument is given, from stdin. resolveInput does not modify the input and
+// returns errUsage when the arguments are misused (no puzzle while stdin is a
+// terminal, or more than one argument), or the read error (including a ctx
+// cancellation) when stdin cannot be read.
 func resolveInput(
 	ctx context.Context,
 	flags *flag.FlagSet,
