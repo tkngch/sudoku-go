@@ -11,13 +11,18 @@ import (
 // cell value.
 var ErrInvalidCharacter = errors.New("invalid character")
 
-// Parse reads a puzzle from its compact form: one character per cell in
-// row-major order, whose length selects the layout (see NewLayoutForCellCount).
+// Parse reads a puzzle written as one character per cell, in row-major order.
+// Parse ignores whitespace, so a puzzle may span one line or several lines, for
+// example as a pasted grid. The number of characters that remain selects the
+// layout (see NewLayoutForCellCount).
+//
 // '0' or '.' is an empty cell (all candidates); '1'-'9' and 'a'-'g'/'A'-'G'
-// (values 10-16) are givens. It returns ErrInvalidCellCount or
+// (values 10-16) are givens. Parse returns ErrInvalidCellCount or
 // ErrInvalidCharacter for malformed input.
 func Parse(input string) (*Grid, error) {
-	cellCount := len(input)
+	// Drop whitespaces from the input
+	compact := strings.Join(strings.Fields(input), "")
+	cellCount := len(compact)
 
 	layout, err := NewLayoutForCellCount(cellCount)
 	if err != nil {
@@ -29,7 +34,7 @@ func Parse(input string) (*Grid, error) {
 	cells := make([]Candidates, cellCount)
 
 	for idx := range cellCount {
-		char := input[idx]
+		char := compact[idx]
 
 		value, ok := toInt(char)
 

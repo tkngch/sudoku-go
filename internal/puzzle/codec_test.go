@@ -9,7 +9,7 @@ import (
 	"github.com/tkngch/sudoku-go/internal/puzzle"
 )
 
-func TestParse(t *testing.T) {
+func TestParseErrors(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
@@ -25,6 +25,12 @@ func TestParse(t *testing.T) {
 			expectedError: puzzle.ErrInvalidCellCount,
 		},
 		{
+			name:          "whitespace only",
+			input:         " \t\n ",
+			expected:      nil,
+			expectedError: puzzle.ErrInvalidCellCount,
+		},
+		{
 			name:          "too short",
 			input:         "123",
 			expected:      nil,
@@ -33,6 +39,12 @@ func TestParse(t *testing.T) {
 		{
 			name:          "too large",
 			input:         strings.Repeat(".", 255),
+			expected:      nil,
+			expectedError: puzzle.ErrInvalidCellCount,
+		},
+		{
+			name:          "too short after ignoring whitespace",
+			input:         "234 123412341234", // 16 characters, but only 15 cells
 			expected:      nil,
 			expectedError: puzzle.ErrInvalidCellCount,
 		},
@@ -62,6 +74,49 @@ func TestParse(t *testing.T) {
 				}
 
 				assert.Equal(t, testCase.expected, grid)
+			},
+		)
+	}
+}
+
+func TestParseEquivalence(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		name       string
+		input      string
+		equivalent string
+	}{
+		{
+			name:       "multiline",
+			input:      ".234\n3.12\n43.1\n214.\n",
+			equivalent: ".234" + "3.12" + "43.1" + "214.",
+		},
+		{
+			name:       "spaced rows",
+			input:      ". 2 3 4  3 . 1 2  4 3 . 1  2 1 4 .",
+			equivalent: ".234" + "3.12" + "43.1" + "214.",
+		},
+		{
+			name:       "leading and trailing space",
+			input:      "  " + ".234" + "3.12" + "43.1" + "214." + "\n",
+			equivalent: ".234" + "3.12" + "43.1" + "214.",
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(
+			testCase.name,
+			func(t *testing.T) {
+				t.Parallel()
+
+				grid, err := puzzle.Parse(testCase.input)
+				require.NoError(t, err)
+
+				expected, err := puzzle.Parse(testCase.equivalent)
+				require.NoError(t, err)
+
+				assert.Equal(t, expected, grid)
 			},
 		)
 	}
