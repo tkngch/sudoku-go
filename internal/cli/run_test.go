@@ -1,4 +1,4 @@
-package sudoku_test
+package cli_test
 
 import (
 	"bytes"
@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/tkngch/sudoku-go/internal/sudoku"
+	"github.com/tkngch/sudoku-go/internal/cli"
 )
 
 // terminalWithNoStdIn looks like an interactive terminal: Stat reports a
@@ -65,7 +65,7 @@ type runTestCase struct {
 	context                func() (context.Context, context.CancelFunc)
 	args                   []string
 	stdin                  io.Reader
-	expectedCode           sudoku.ExitCode
+	expectedCode           cli.ExitCode
 	expectedStdout         string
 	expectedStderrContains string
 }
@@ -84,7 +84,7 @@ func TestRun(t *testing.T) {
 			context:                backgroundContext,
 			args:                   []string{unsolved4x4},
 			stdin:                  nil,
-			expectedCode:           sudoku.ExitOK,
+			expectedCode:           cli.ExitOK,
 			expectedStdout:         solved4x4 + "\n",
 			expectedStderrContains: "Solution",
 		},
@@ -93,7 +93,7 @@ func TestRun(t *testing.T) {
 			context:                backgroundContext,
 			args:                   []string{"-timeout", "0", unsolved4x4},
 			stdin:                  nil,
-			expectedCode:           sudoku.ExitOK,
+			expectedCode:           cli.ExitOK,
 			expectedStdout:         solved4x4 + "\n",
 			expectedStderrContains: "Solution",
 		},
@@ -102,7 +102,7 @@ func TestRun(t *testing.T) {
 			context:                backgroundContext,
 			args:                   []string{"-timeout", "5s", unsolved4x4},
 			stdin:                  nil,
-			expectedCode:           sudoku.ExitOK,
+			expectedCode:           cli.ExitOK,
 			expectedStdout:         solved4x4 + "\n",
 			expectedStderrContains: "Solution",
 		},
@@ -113,7 +113,7 @@ func TestRun(t *testing.T) {
 			stdin: strings.NewReader(
 				unsolved4x4[:2] + "\n" + unsolved4x4[2:] + "\n",
 			),
-			expectedCode:           sudoku.ExitOK,
+			expectedCode:           cli.ExitOK,
 			expectedStdout:         solved4x4 + "\n",
 			expectedStderrContains: "Solution",
 		},
@@ -122,7 +122,7 @@ func TestRun(t *testing.T) {
 			context:                backgroundContext,
 			args:                   []string{"-h"},
 			stdin:                  nil,
-			expectedCode:           sudoku.ExitOK,
+			expectedCode:           cli.ExitOK,
 			expectedStdout:         "",
 			expectedStderrContains: "usage:",
 		},
@@ -148,7 +148,7 @@ func TestRunError(t *testing.T) {
 			context:                backgroundContext,
 			args:                   []string{},
 			stdin:                  strings.NewReader(""),
-			expectedCode:           sudoku.ExitError,
+			expectedCode:           cli.ExitError,
 			expectedStdout:         "",
 			expectedStderrContains: "invalid cell count",
 		},
@@ -157,7 +157,7 @@ func TestRunError(t *testing.T) {
 			context:                backgroundContext,
 			args:                   []string{"z234123412341234"},
 			stdin:                  nil,
-			expectedCode:           sudoku.ExitError,
+			expectedCode:           cli.ExitError,
 			expectedStdout:         "",
 			expectedStderrContains: "invalid character",
 		},
@@ -166,7 +166,7 @@ func TestRunError(t *testing.T) {
 			context:                backgroundContext,
 			args:                   []string{"123"},
 			stdin:                  nil,
-			expectedCode:           sudoku.ExitError,
+			expectedCode:           cli.ExitError,
 			expectedStdout:         "",
 			expectedStderrContains: "invalid cell count",
 		},
@@ -175,7 +175,7 @@ func TestRunError(t *testing.T) {
 			context:                backgroundContext,
 			args:                   []string{"11.." + "...." + "...." + "...."},
 			stdin:                  nil,
-			expectedCode:           sudoku.ExitError,
+			expectedCode:           cli.ExitError,
 			expectedStdout:         "",
 			expectedStderrContains: "solution not found",
 		},
@@ -184,7 +184,7 @@ func TestRunError(t *testing.T) {
 			context:                backgroundContext,
 			args:                   []string{},
 			stdin:                  iotest.ErrReader(errSimulated),
-			expectedCode:           sudoku.ExitError,
+			expectedCode:           cli.ExitError,
 			expectedStdout:         "",
 			expectedStderrContains: errSimulated.Error(),
 		},
@@ -210,7 +210,7 @@ func TestRunMisuseError(t *testing.T) {
 			context:                backgroundContext,
 			args:                   []string{solved4x4, solved4x4},
 			stdin:                  nil,
-			expectedCode:           sudoku.ExitMisuse,
+			expectedCode:           cli.ExitMisuse,
 			expectedStdout:         "",
 			expectedStderrContains: "usage:",
 		},
@@ -219,7 +219,7 @@ func TestRunMisuseError(t *testing.T) {
 			context:                backgroundContext,
 			args:                   []string{"-x"},
 			stdin:                  nil,
-			expectedCode:           sudoku.ExitMisuse,
+			expectedCode:           cli.ExitMisuse,
 			expectedStdout:         "",
 			expectedStderrContains: "not defined",
 		},
@@ -228,7 +228,7 @@ func TestRunMisuseError(t *testing.T) {
 			context:                backgroundContext,
 			args:                   []string{},
 			stdin:                  terminalWithNoStdIn{},
-			expectedCode:           sudoku.ExitMisuse,
+			expectedCode:           cli.ExitMisuse,
 			expectedStdout:         "",
 			expectedStderrContains: "usage:",
 		},
@@ -237,7 +237,7 @@ func TestRunMisuseError(t *testing.T) {
 			context:                backgroundContext,
 			args:                   []string{"-timeout", "-5s", solved4x4},
 			stdin:                  nil,
-			expectedCode:           sudoku.ExitMisuse,
+			expectedCode:           cli.ExitMisuse,
 			expectedStdout:         "",
 			expectedStderrContains: "timeout",
 		},
@@ -263,7 +263,7 @@ func TestRunContext(t *testing.T) {
 			context:                alreadyTimedoutContext,
 			args:                   []string{solved4x4},
 			stdin:                  nil,
-			expectedCode:           sudoku.ExitTimeout,
+			expectedCode:           cli.ExitTimeout,
 			expectedStdout:         "",
 			expectedStderrContains: "timed out",
 		},
@@ -272,7 +272,7 @@ func TestRunContext(t *testing.T) {
 			context:                alreadyCanceledContext,
 			args:                   []string{solved4x4},
 			stdin:                  nil,
-			expectedCode:           sudoku.ExitInterrupted,
+			expectedCode:           cli.ExitInterrupted,
 			expectedStdout:         "",
 			expectedStderrContains: "interrupted",
 		},
@@ -301,9 +301,9 @@ func TestRunCanceledBeforeReadingStdin(t *testing.T) {
 
 	var stdout, stderr bytes.Buffer
 
-	code := sudoku.Run(ctx, []string{}, failingReader{t: t}, &stdout, &stderr)
+	code := cli.Run(ctx, []string{}, failingReader{t: t}, &stdout, &stderr)
 
-	assert.Equal(t, sudoku.ExitInterrupted, code)
+	assert.Equal(t, cli.ExitInterrupted, code)
 	assert.Contains(t, stderr.String(), "interrupted")
 }
 
@@ -324,16 +324,16 @@ func TestRunInterruptedDuringRead(t *testing.T) {
 
 	var stdout, stderr bytes.Buffer
 
-	code := make(chan sudoku.ExitCode, 1)
+	code := make(chan cli.ExitCode, 1)
 
 	go func() {
-		code <- sudoku.Run(ctx, []string{}, stdin, &stdout, &stderr)
+		code <- cli.Run(ctx, []string{}, stdin, &stdout, &stderr)
 	}()
 
 	<-reading // the read is in progress and the context was live when it started
 	cancel()  // interrupt mid-read
 
-	assert.Equal(t, sudoku.ExitInterrupted, <-code)
+	assert.Equal(t, cli.ExitInterrupted, <-code)
 	assert.Contains(t, stderr.String(), "interrupted")
 }
 
@@ -348,7 +348,7 @@ func testRun(
 	ctx, cancel := testCase.context()
 	defer cancel()
 
-	code := sudoku.Run(ctx, testCase.args, testCase.stdin, &stdout, &stderr)
+	code := cli.Run(ctx, testCase.args, testCase.stdin, &stdout, &stderr)
 
 	assert.Equal(t, testCase.expectedCode, code)
 	assert.Equal(t, testCase.expectedStdout, stdout.String())

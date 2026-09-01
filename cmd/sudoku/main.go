@@ -7,7 +7,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/tkngch/sudoku-go/internal/sudoku"
+	"github.com/tkngch/sudoku-go/internal/cli"
 )
 
 func main() {
@@ -18,9 +18,9 @@ func main() {
 // run executes the program and returns an exit code. This short function is not
 // inlined to main, to ensure context is cancelled before termination: `defer`
 // fires on function returns but not os.Exit.
-func run() sudoku.ExitCode {
+func run() cli.ExitCode {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	return sudoku.Run(ctx, os.Args[1:], os.Stdin, os.Stdout, os.Stderr)
+	return cli.Run(ctx, os.Args[1:], os.Stdin, os.Stdout, os.Stderr)
 }
