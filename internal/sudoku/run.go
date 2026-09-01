@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/tkngch/sudoku-go/internal/puzzle"
@@ -114,10 +113,11 @@ func newFlagSet(stderr io.Writer) (*flag.FlagSet, *time.Duration) {
 	return flags, timeoutPtr
 }
 
-// resolveInput returns the sanitized puzzle input from the sole argument or,
-// when no argument is given, from stdin. It returns errUsage when the arguments
-// are misused (no puzzle while stdin is a terminal, or more than one argument),
-// or the read error (including a ctx cancellation) when stdin cannot be read.
+// resolveInput returns the puzzle input from the sole argument or, when no
+// argument is given, from stdin. resolveInput does not modify the input and
+// returns errUsage when the arguments are misused (no puzzle while stdin is a
+// terminal, or more than one argument), or the read error (including a ctx
+// cancellation) when stdin cannot be read.
 func resolveInput(
 	ctx context.Context,
 	flags *flag.FlagSet,
@@ -134,9 +134,9 @@ func resolveInput(
 			return "", fmt.Errorf("resolve-input: %w", err)
 		}
 
-		return sanitize(string(data)), nil
+		return string(data), nil
 	case 1:
-		return sanitize(flags.Arg(0)), nil
+		return flags.Arg(0), nil
 	default:
 		return "", fmt.Errorf("resolve-input: %w", errUsage)
 	}
@@ -202,13 +202,6 @@ func isTerminal(r io.Reader) bool {
 	fi, err := f.Stat()
 
 	return err == nil && fi.Mode()&os.ModeCharDevice != 0
-}
-
-// sanitize strips all whitespace so a puzzle may be supplied across multiple
-// lines (for example pasted as a grid) and still match the compact,
-// one-character-per-cell form that puzzle.Parse expects.
-func sanitize(raw string) string {
-	return strings.Join(strings.Fields(raw), "")
 }
 
 // fail reports err on stderr and returns the error exit code.

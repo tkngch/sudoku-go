@@ -107,10 +107,12 @@ func TestRun(t *testing.T) {
 			expectedStderrContains: "Solution",
 		},
 		{
-			name:                   "multilined puzzle in stdin",
-			context:                backgroundContext,
-			args:                   []string{},
-			stdin:                  strings.NewReader(unsolved4x4 + "\n"),
+			name:    "multilined puzzle in stdin",
+			context: backgroundContext,
+			args:    []string{},
+			stdin: strings.NewReader(
+				unsolved4x4[:2] + "\n" + unsolved4x4[2:] + "\n",
+			),
 			expectedCode:           sudoku.ExitOK,
 			expectedStdout:         solved4x4 + "\n",
 			expectedStderrContains: "Solution",

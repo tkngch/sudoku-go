@@ -9,43 +9,47 @@ import (
 	"github.com/tkngch/sudoku-go/internal/puzzle"
 )
 
-func TestParse(t *testing.T) {
+func TestParseErrors(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
 		name          string
 		input         string
-		expected      *puzzle.Grid
 		expectedError error
 	}{
 		{
 			name:          "empty",
 			input:         "",
-			expected:      nil,
+			expectedError: puzzle.ErrInvalidCellCount,
+		},
+		{
+			name:          "whitespace only",
+			input:         " \t\n ",
 			expectedError: puzzle.ErrInvalidCellCount,
 		},
 		{
 			name:          "too short",
 			input:         "123",
-			expected:      nil,
 			expectedError: puzzle.ErrInvalidCellCount,
 		},
 		{
 			name:          "too large",
 			input:         strings.Repeat(".", 255),
-			expected:      nil,
+			expectedError: puzzle.ErrInvalidCellCount,
+		},
+		{
+			name:          "too short after ignoring whitespace",
+			input:         "234 123412341234", // 16 characters, but only 15 cells
 			expectedError: puzzle.ErrInvalidCellCount,
 		},
 		{
 			name:          "unexpectedly large value",
 			input:         "9234123412341234", // 9 is unexpected for 4x4 grid
-			expected:      nil,
 			expectedError: puzzle.ErrInvalidCharacter,
 		},
 		{
 			name:          "unexpected value",
 			input:         "z234123412341234", // z is unexpected
-			expected:      nil,
 			expectedError: puzzle.ErrInvalidCharacter,
 		},
 	}
@@ -57,11 +61,51 @@ func TestParse(t *testing.T) {
 				t.Parallel()
 
 				grid, err := puzzle.Parse(testCase.input)
-				if testCase.expectedError != nil {
-					require.ErrorIs(t, err, testCase.expectedError)
-				}
+				require.ErrorIs(t, err, testCase.expectedError)
+				assert.Nil(t, grid)
+			},
+		)
+	}
+}
 
-				assert.Equal(t, testCase.expected, grid)
+func TestParseEquivalence(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		name       string
+		input      string
+		equivalent string
+	}{
+		{
+			name:       "multiline",
+			input:      ".234\n3.12\n43.1\n214.\n",
+			equivalent: ".234" + "3.12" + "43.1" + "214.",
+		},
+		{
+			name:       "spaced rows",
+			input:      ". 2 3 4  3 . 1 2  4 3 . 1  2 1 4 .",
+			equivalent: ".234" + "3.12" + "43.1" + "214.",
+		},
+		{
+			name:       "leading and trailing space",
+			input:      "  " + ".234" + "3.12" + "43.1" + "214." + "\n",
+			equivalent: ".234" + "3.12" + "43.1" + "214.",
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(
+			testCase.name,
+			func(t *testing.T) {
+				t.Parallel()
+
+				grid, err := puzzle.Parse(testCase.input)
+				require.NoError(t, err)
+
+				expected, err := puzzle.Parse(testCase.equivalent)
+				require.NoError(t, err)
+
+				assert.Equal(t, expected, grid)
 			},
 		)
 	}
