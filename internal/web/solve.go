@@ -12,12 +12,13 @@ import (
 // The error kinds that ErrorKind returns. The browser selects one message per
 // kind, so these labels are part of the API and stay stable.
 const (
-	// KindSize reports an input whose cell count does not matches a supported
+	// KindSize reports an input whose cell count does not match a supported
 	// layout.
 	KindSize = "size"
 
 	// KindCharacter reports an input that holds a character which no cell
-	// accepts.
+	// accepts. This kind also covers a valid digit that is too large for the
+	// layout, such as '9' in a 4x4 puzzle.
 	KindCharacter = "character"
 
 	// KindUnsolvable reports a well-formed puzzle that has no solution.
@@ -32,10 +33,10 @@ const (
 // puzzle.Parse, so it ignores whitespace and it selects the layout from the
 // number of cells.
 //
-// Solve applies no deadline. The js/wasm runtime has neither a sysmon thread
-// nor asynchronous preemption, so a timer fires late during a solve. The caller
-// owns the whole timeout policy: the browser stops a solve by terminating the
-// worker.
+// Solve applies no deadline. The js/wasm runtime omits the sysmon thread and
+// asynchronous preemption, so the runtime delays a timer for an unbounded time
+// during a solve. The caller owns the whole timeout policy. To stop a solve,
+// the browser terminates the worker.
 //
 // Pass the error to ErrorKind to obtain a short label for the browser.
 func Solve(input string) (string, error) {
