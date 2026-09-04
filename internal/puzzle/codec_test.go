@@ -45,11 +45,23 @@ func TestParseErrors(t *testing.T) {
 		{
 			name:          "unexpectedly large value",
 			input:         "9234123412341234", // 9 is unexpected for 4x4 grid
-			expectedError: puzzle.ErrInvalidCharacter,
+			expectedError: puzzle.ErrValueOutOfRange,
 		},
 		{
 			name:          "unexpected value",
 			input:         "z234123412341234", // z is unexpected
+			expectedError: puzzle.ErrInvalidCharacter,
+		},
+		{
+			// This input holds both faults. The character takes precedence,
+			// because the cell count of a malformed input means little.
+			name:          "unexpected value in a short input",
+			input:         "z23",
+			expectedError: puzzle.ErrInvalidCharacter,
+		},
+		{
+			name:          "zero width space before a full grid",
+			input:         "\u200B" + strings.Repeat("123456789", 9),
 			expectedError: puzzle.ErrInvalidCharacter,
 		},
 	}
@@ -89,6 +101,11 @@ func TestParseEquivalence(t *testing.T) {
 		{
 			name:       "leading and trailing space",
 			input:      "  " + ".234" + "3.12" + "43.1" + "214." + "\n",
+			equivalent: ".234" + "3.12" + "43.1" + "214.",
+		},
+		{
+			name:       "no-break space between rows",
+			input:      ".234" + "\u00A0" + "3.12" + "43.1" + "214.",
 			equivalent: ".234" + "3.12" + "43.1" + "214.",
 		},
 	}

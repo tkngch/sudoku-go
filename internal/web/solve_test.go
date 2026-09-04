@@ -1,7 +1,6 @@
 package web_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -35,8 +34,8 @@ func TestSolve(t *testing.T) {
 			func(t *testing.T) {
 				t.Parallel()
 
-				solution, err := web.Solve(testCase.input)
-				require.NoError(t, err)
+				solution, errKind := web.Solve(testCase.input)
+				require.Empty(t, errKind)
 				assert.Equal(t, testCase.expected, solution)
 			},
 		)
@@ -49,33 +48,40 @@ func TestSolveErrorKind(t *testing.T) {
 	testCases := []struct {
 		name         string
 		input        string
-		expectedKind string
+		expectedKind web.ErrorKind
 	}{
 		{
 			name:         "empty",
 			input:        "",
-			expectedKind: web.KindSize,
+			expectedKind: web.ErrorKindSize,
 		},
 		{
 			name:         "cell count matches no layout",
 			input:        "123",
-			expectedKind: web.KindSize,
+			expectedKind: web.ErrorKindSize,
 		},
 		{
 			name:         "unexpected character",
 			input:        "z234" + "3.12" + "43.1" + "214.",
-			expectedKind: web.KindCharacter,
+			expectedKind: web.ErrorKindCharacter,
+		},
+		{
+			// A paste carries a byte order mark before a complete grid. The
+			// cell count is correct, so the character is the fault.
+			name:         "byte order mark before a full grid",
+			input:        "\uFEFF" + ".234" + "3.12" + "43.1" + "214.",
+			expectedKind: web.ErrorKindCharacter,
 		},
 		{
 			name:         "value too large for the layout",
 			input:        "9234" + "3.12" + "43.1" + "214.",
-			expectedKind: web.KindCharacter,
+			expectedKind: web.ErrorKindValue,
 		},
 		{
 			// The first row holds the value 1 twice, so no solution exists.
 			name:         "repeated given",
 			input:        "11.." + "...." + "...." + "....",
-			expectedKind: web.KindUnsolvable,
+			expectedKind: web.ErrorKindUnsolvable,
 		},
 	}
 
@@ -85,19 +91,10 @@ func TestSolveErrorKind(t *testing.T) {
 			func(t *testing.T) {
 				t.Parallel()
 
-				solution, err := web.Solve(testCase.input)
-				require.Error(t, err)
+				solution, errKind := web.Solve(testCase.input)
 				assert.Empty(t, solution)
-				assert.Equal(t, testCase.expectedKind, web.ErrorKind(err))
+				assert.Equal(t, testCase.expectedKind, errKind)
 			},
 		)
 	}
-}
-
-// TestErrorKindUnknown covers the errors that Solve does not produce.
-func TestErrorKindUnknown(t *testing.T) {
-	t.Parallel()
-
-	assert.Equal(t, web.KindUnknown, web.ErrorKind(nil))
-	assert.Equal(t, web.KindUnknown, web.ErrorKind(context.Canceled))
 }
