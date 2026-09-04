@@ -1,4 +1,4 @@
-package sudoku
+package cli
 
 import (
 	"context"
