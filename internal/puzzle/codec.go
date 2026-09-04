@@ -7,9 +7,16 @@ import (
 	"strings"
 )
 
-// ErrInvalidCharacter is returned by Parse when the input contains an invalid
-// cell value.
-var ErrInvalidCharacter = errors.New("invalid character")
+var (
+	// ErrInvalidCharacter is returned by Parse when the input contains a
+	// character that no cell accepts.
+	ErrInvalidCharacter = errors.New("invalid character")
+
+	// ErrValueOutOfRange is returned by Parse when the input contains a valid
+	// digit or letter whose value is larger than the grid size, such as '9' in
+	// a 4x4 puzzle.
+	ErrValueOutOfRange = errors.New("value out of range")
+)
 
 // Parse reads a puzzle written as one character per cell, in row-major order.
 // Parse ignores whitespace, so a puzzle may span one line or several lines, for
@@ -17,33 +24,41 @@ var ErrInvalidCharacter = errors.New("invalid character")
 // layout (see NewLayoutForCellCount).
 //
 // '0' or '.' is an empty cell (all candidates); '1'-'9' and 'a'-'g'/'A'-'G'
-// (values 10-16) are givens. Parse returns ErrInvalidCellCount or
-// ErrInvalidCharacter for malformed input.
+// (values 10-16) are givens. Parse returns ErrInvalidCellCount,
+// ErrInvalidCharacter, or ErrValueOutOfRange for malformed input.
+//
+// An invalid character takes precedence over an invalid cell count. A stray
+// multi-byte character, such as a BOM that a paste carries, therefore reports
+// ErrInvalidCharacter and not a misleading ErrInvalidCellCount.
 func Parse(input string) (*Grid, error) {
 	compact := strings.Join(strings.Fields(input), "")
-	cellCount := len(compact)
 
-	layout, err := NewLayoutForCellCount(cellCount)
+	values := make([]int, 0, len(compact))
+	for _, char := range compact {
+		value, ok := toInt(char)
+		if !ok {
+			return nil, fmt.Errorf("parse %q: %w", char, ErrInvalidCharacter)
+		}
+
+		values = append(values, value)
+	}
+
+	layout, err := NewLayoutForCellCount(len(values))
 	if err != nil {
 		return nil, fmt.Errorf("parse: %w", err)
 	}
 
-	minCellValue, maxCellValue := 1, layout.GridSize()
+	maxCellValue := layout.GridSize()
+	cells := make([]Candidates, 0, len(compact))
 
-	cells := make([]Candidates, cellCount)
-
-	for idx := range cellCount {
-		char := compact[idx]
-
-		value, ok := toInt(char)
-
+	for _, value := range values {
 		switch {
-		case ok && value >= minCellValue && value <= maxCellValue:
-			cells[idx] = NewSingleCandidate(value)
-		case ok && value == 0:
-			cells[idx] = NewCandidatesForRange(maxCellValue)
+		case value == 0:
+			cells = append(cells, NewCandidatesForRange(maxCellValue))
+		case value <= maxCellValue:
+			cells = append(cells, NewSingleCandidate(value))
 		default:
-			return nil, fmt.Errorf("parse %q: %w", char, ErrInvalidCharacter)
+			return nil, fmt.Errorf("parse %d: %w", value, ErrValueOutOfRange)
 		}
 	}
 
@@ -123,7 +138,7 @@ func (g *Grid) rowSeparator() string {
 	return "+" + strings.Join(separators, "+") + "+"
 }
 
-func toInt(char byte) (int, bool) {
+func toInt(char rune) (int, bool) {
 	switch {
 	case char == '0' || char == '.':
 		return 0, true
