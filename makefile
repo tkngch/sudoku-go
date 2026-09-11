@@ -7,15 +7,19 @@ default: format vet lint test
 format:
 	golangci-lint fmt ./...
 	golangci-lint run --fix ./...
+	GOOS=js GOARCH=wasm golangci-lint fmt ./...
+	GOOS=js GOARCH=wasm golangci-lint run --fix ./...
 
 .PHONY: vet
 vet:
 	go vet ./...
+	GOOS=js GOARCH=wasm go vet ./...
 
 .PHONY: lint
 lint:
 	gofmt -l .
 	golangci-lint run ./...
+	GOOS=js GOARCH=wasm golangci-lint run ./...
 
 .PHONY: test
 test:
@@ -31,6 +35,33 @@ build: $(BIN)
 
 $(BIN): $(SOURCES)
 	go build -o $@ ./cmd/sudoku
+
+WEB_DIR    := build/web
+WASM_EXEC  := $(shell go env GOROOT)/lib/wasm/wasm_exec.js
+WEB_STATIC := $(patsubst web/%,$(WEB_DIR)/%,$(wildcard web/*))
+
+.PHONY: web
+web: $(WEB_DIR)/sudoku.wasm $(WEB_DIR)/wasm_exec.js $(WEB_STATIC)
+
+$(WEB_DIR)/sudoku.wasm: $(SOURCES)
+	@mkdir -p $(WEB_DIR)
+	GOOS=js GOARCH=wasm go build -ldflags='-s -w' -o $@ ./cmd/sudoku-wasm
+
+$(WEB_DIR)/wasm_exec.js: $(WASM_EXEC)
+	@mkdir -p $(WEB_DIR)
+	cp $< $@
+
+$(WEB_DIR)/%: web/%
+	@mkdir -p $(WEB_DIR)
+	cp $< $@
+
+.PHONY: smoke
+smoke: web
+	node scripts/smoke.mjs
+
+.PHONY: clean
+clean:
+	rm -rf build
 
 PROF_DIR  := build/prof
 PROF_CPU := $(PROF_DIR)/cpu.prof
