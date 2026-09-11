@@ -1,7 +1,7 @@
 SHELL := bash
 SOURCES := $(shell find . -name '*.go')
 
-default: format vet lint test
+default: format vet lint test smoke
 
 .PHONY: format
 format:

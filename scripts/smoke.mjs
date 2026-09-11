@@ -1,10 +1,18 @@
 // smoke.mjs loads the WebAssembly module and calls it. It proves that the
 // module starts, that it installs the global object `sudoku`, and that `solve`
-// answers. This script reads build/web/.
+// answers.
+//
+// The first argument names the directory that holds the module. The default is
+// build/web. The script resolves a relative path against the current directory,
+// so call it from the root of the repository.
 
 import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 
-const webDir = new URL("../build/web/", import.meta.url);
+// new URL needs the final separator. Without it, the URL drops the last
+// segment of the path.
+const webDir = pathToFileURL(`${resolve(process.argv[2] ?? "build/web")}/`);
 
 const puzzle = ".2343.1243.1214.";
 const solution = "1234341243212143";
@@ -31,6 +39,13 @@ function runChecks() {
 
 	const short = globalThis.sudoku.solve("123");
 	check("size.kind", short.kind, "size");
+
+	// Prove that solve rejects a long input by its length. The checks below run
+	// after this one, so they also prove that the module stays alive.
+	const long = globalThis.sudoku.solve("1".repeat(1 << 20));
+	check("long.ok", long.ok, false);
+	check("long.solution", long.solution, "");
+	check("long.kind", long.kind, "size");
 
 	const noArg = globalThis.sudoku.solve();
 	check("noArg.ok", noArg.ok, false);
