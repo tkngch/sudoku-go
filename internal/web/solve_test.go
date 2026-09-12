@@ -1,7 +1,6 @@
 package web_test
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -59,13 +58,6 @@ func TestSolveErrorKind(t *testing.T) {
 		{
 			name:         "cell count matches no layout",
 			input:        "123",
-			expectedKind: web.ErrorKindSize,
-		},
-		{
-			// Solve applies the bound before it parses the input, so the length
-			// is the fault and the unexpected character is not.
-			name:         "longer than MaxInputLength",
-			input:        strings.Repeat("z", 10000),
 			expectedKind: web.ErrorKindSize,
 		},
 		{

@@ -14,8 +14,7 @@ type ErrorKind string
 
 const (
 	// ErrorKindSize reports an input whose cell count does not match a
-	// supported layout. It also reports an input that is longer than
-	// MaxInputLength.
+	// supported layout.
 	ErrorKindSize ErrorKind = "size"
 
 	// ErrorKindCharacter reports an input that holds a character which no cell
@@ -33,26 +32,10 @@ const (
 	ErrorKindUnknown ErrorKind = "unknown"
 )
 
-// maxInputLength is the longest input that Solve accepts. The unit is the
-// byte.
-//
-// The largest layout holds 144 cells. Solve ignores whitespace, so it also
-// accepts a grid form with a line break and a space between the cells. 4096
-// keeps a large margin above that form.
-//
-// Solve needs this bound because puzzle.Parse allocates memory for each
-// character before it counts the cells. A long input therefore costs much more
-// memory than the input itself. In the browser this stops the WebAssembly
-// runtime with an out-of-memory error.
-const maxInputLength = 4096
-
 // Solve parses the puzzle, solves it, and returns the solution in the compact,
 // one-line form that Grid.String produces. Solve accepts the same input as
 // puzzle.Parse, so it ignores whitespace and it selects the layout from the
 // number of cells.
-//
-// Solve rejects an input that is longer than MaxInputLength, and it reports the
-// kind ErrorKindSize. Solve applies this bound before it parses the input.
 //
 // Solve applies no timeout. The js/wasm runtime omits the sysmon thread and
 // asynchronous preemption, so the runtime delays a timer for an unbounded time
@@ -66,10 +49,6 @@ const maxInputLength = 4096
 // Solve returns an empty ErrorKind after a success. Otherwise Solve returns an
 // empty solution and an ErrorKind that labels the fault.
 func Solve(input string) (string, ErrorKind) {
-	if len(input) > maxInputLength {
-		return "", ErrorKindSize
-	}
-
 	grid, err := puzzle.Parse(input)
 	if err != nil {
 		return "", newErrorKind(err)
