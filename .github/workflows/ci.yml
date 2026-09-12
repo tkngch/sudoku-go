@@ -31,11 +31,24 @@ jobs:
             exit 1
           fi
       - run: go vet ./...
+      - name: go vet (js/wasm)
+        env:
+          GOOS: js
+          GOARCH: wasm
+        run: go vet ./...
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v9
         with:
           version: v2.12
+      # The action above puts golangci-lint on PATH, so call the binary here.
+      - name: golangci-lint (js/wasm)
+        env:
+          GOOS: js
+          GOARCH: wasm
+        run: golangci-lint run ./...
       - run: make test
+      - run: make web
+      - run: make smoke
 
   bench:
     name: Benchmark (advisory)
