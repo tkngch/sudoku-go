@@ -20,6 +20,8 @@ lint:
 	gofmt -l .
 	golangci-lint run ./...
 	GOOS=js GOARCH=wasm golangci-lint run ./...
+	node --check web/app.js
+	node --check web/worker.js
 
 .PHONY: test
 test:
@@ -54,6 +56,13 @@ $(WEB_DIR)/wasm_exec.js: $(WASM_EXEC)
 $(WEB_DIR)/%: web/%
 	@mkdir -p $(WEB_DIR)
 	cp $< $@
+
+# The page needs an HTTP server. A file:// URL blocks fetch, the worker, and
+# the WebAssembly instantiation. Python 3.10 and later map .wasm to
+# application/wasm, so instantiateStreaming works.
+.PHONY: serve
+serve: web
+	python3 -m http.server --directory $(WEB_DIR) 8080
 
 .PHONY: smoke
 smoke: web
