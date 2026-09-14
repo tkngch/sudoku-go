@@ -14,7 +14,7 @@
 	const BLOCK_COLS = 3;
 	const CELL_COUNT = GRID_SIZE * GRID_SIZE;
 
-	// TIMEOUT_MS matches the -timeout default of the command line tool.
+	// TIMEOUT_MS is the limit for one solve.
 	const TIMEOUT_MS = 10000;
 
 	const EMPTY = ".";
@@ -40,6 +40,7 @@
 	const TIMEOUT_MESSAGE = `The solver ran for more than ${TIMEOUT_MS / 1000} seconds, so the page stopped it.`;
 	const LOAD_ERROR_MESSAGE = "The solver failed to load. Reload the page to try again.";
 	const EXAMPLES_ERROR_MESSAGE = "The example puzzles failed to load.";
+	const HASH_ERROR_MESSAGE = "The link holds a puzzle that the page cannot read.";
 
 	const gridElement = document.getElementById("grid");
 	const solveButton = document.getElementById("solve");
@@ -52,11 +53,13 @@
 	let worker = null;
 
 	// requestId counts the solve requests. pendingId names the request that the
-	// page still waits for, or 0 when no request runs. A reply with another id
-	// belongs to a worker that the page abandoned, so the page drops it.
+	// page still waits for, or 0 when no request runs.
 	let requestId = 0;
 	let pendingId = 0;
 	let watchdog = 0;
+
+	// pendingPuzzle holds the grid that the open request asked about.
+	let pendingPuzzle = "";
 
 	// solutionShown reports whether the grid holds values from the solver.
 	let solutionShown = false;
@@ -73,12 +76,12 @@
 		alertElement.textContent = "";
 	}
 
-	// buildGrid creates the cells and returns them in row-major order. It adds
-	// the block classes from BLOCK_ROWS and BLOCK_COLS, so the geometry stays in
-	// this file and the stylesheet holds no grid size.
+	// buildGrid creates the cells and returns them in row-major order.
 	function buildGrid() {
 		const fragment = document.createDocumentFragment();
 		const inputs = [];
+
+		gridElement.style.setProperty("--grid-size", String(GRID_SIZE));
 
 		for (let index = 0; index < CELL_COUNT; index += 1) {
 			const row = Math.floor(index / GRID_SIZE);
@@ -199,16 +202,7 @@
 		window.history.replaceState(null, "", url);
 	}
 
-	// restoreFromHash fills the grid from the URL. The page calls it on load,
-	// and again when the hash changes. A hash change arrives when the user
-	// opens a shared link in this tab, or edits the address bar.
-	//
-	// updateHash calls replaceState, which fires no hashchange event, so these
-	// two functions never call each other.
-	//
-	// Set replaced to true for a hash change, and to false for the first load.
-	// A hash change drops the last result, which belongs to another puzzle. The
-	// first load keeps the message that reports the progress of the module.
+	// restoreFromHash fills the grid from the URL.
 	function restoreFromHash(replaced) {
 		const hash = window.location.hash;
 
@@ -216,7 +210,13 @@
 			return;
 		}
 
-		const puzzle = decodeURIComponent(hash.slice(HASH_PREFIX.length));
+		try {
+			const puzzle = decodeURIComponent(hash.slice(HASH_PREFIX.length));
+		} catch {
+  		showError(HASH_ERROR_MESSAGE);
+  		return;
+		}
+
 		const kind = checkPuzzle(puzzle);
 
 		if (kind !== "") {
@@ -367,14 +367,19 @@
 		clearSolution();
 		clearError();
 
+		// Read the grid after clearSolution, so the request holds the puzzle
+		// that the user typed and no value from an earlier solve.
+		const puzzle = readGrid();
+
 		requestId += 1;
 		pendingId = requestId;
+		pendingPuzzle = puzzle;
 
 		solveButton.disabled = true;
 		setStatus("The solver runs.");
 
 		watchdog = window.setTimeout(() => restart(TIMEOUT_MESSAGE), TIMEOUT_MS);
-		worker.postMessage({ type: "solve", id: pendingId, puzzle: readGrid() });
+		worker.postMessage({ type: "solve", id: pendingId, puzzle });
 	}
 
 	function onClear() {
@@ -403,6 +408,7 @@
 		window.clearTimeout(watchdog);
 		watchdog = 0;
 		pendingId = 0;
+		pendingPuzzle = "";
 	}
 
 	// restart stops the worker and starts a new one. The worker reads no message
@@ -442,8 +448,17 @@
 			return;
 		}
 
+		// Drop a reply when the user changed the grid after the request.
+		const stale = pendingPuzzle !== readGrid();
+
 		endRequest();
 		solveButton.disabled = false;
+
+		if (stale) {
+			setStatus("");
+
+			return;
+		}
 
 		if (reply.ok) {
 			showSolution(reply.solution);
@@ -460,7 +475,12 @@
 		const created = new Worker("./worker.js");
 
 		created.onmessage = onWorkerMessage;
+
+		// End the open request here, as the error branch of onWorkerMessage
+		// does. Without this call the watchdog stays active. It then replaces
+		// this message with the timeout message and starts a second worker.
 		created.onerror = () => {
+			endRequest();
 			solveButton.disabled = true;
 			showError(LOAD_ERROR_MESSAGE);
 			setStatus("");
@@ -497,11 +517,12 @@
 		exampleSelect.addEventListener("change", onExample);
 		window.addEventListener("hashchange", () => restoreFromHash(true));
 
-		restoreFromHash(false);
-
-		// Start the worker last. The grid is already on the screen, so it paints
-		// long before the module arrives.
+		// Start the worker before the page reads the hash. The grid is already
+		// on the screen, so it paints long before the module arrives. This
+		// order also keeps the solver alive after a fault in the hash.
 		worker = newWorker();
+
+		restoreFromHash(false);
 
 		loadExamples().catch(() => showError(EXAMPLES_ERROR_MESSAGE));
 	}

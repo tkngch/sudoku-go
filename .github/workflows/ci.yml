@@ -46,6 +46,10 @@ jobs:
           GOOS: js
           GOARCH: wasm
         run: golangci-lint run ./...
+      - name: Check the browser scripts
+        run: |
+          node --check web/app.js
+          node --check web/worker.js
       - run: make test
       - run: make web
       - run: make smoke

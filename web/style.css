@@ -62,8 +62,8 @@ h1 {
    the right and at the bottom. */
 .grid {
 	display: grid;
-	grid-template-columns: repeat(9, 1fr);
-	grid-template-rows: repeat(9, 1fr);
+	grid-template-columns: repeat(var(--grid-size), 1fr);
+	grid-template-rows: repeat(var(--grid-size), 1fr);
 	width: 100%;
 	aspect-ratio: 1;
 	border-right: 3px solid var(--line-strong);
