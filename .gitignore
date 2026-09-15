@@ -33,3 +33,6 @@ go.work.sum
 
 # Build output
 /build/
+
+# The lint tooling for the browser scripts
+/node_modules/

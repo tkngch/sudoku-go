@@ -46,10 +46,15 @@ jobs:
           GOOS: js
           GOARCH: wasm
         run: golangci-lint run ./...
+      # Install node after the Go checks. npm writes node_modules, and one
+      # package there ships a Go file that the Go linters would report.
+      - uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
+          cache: npm
+      - run: npm ci
       - name: Check the browser scripts
-        run: |
-          node --check web/app.js
-          node --check web/worker.js
+        run: npx --no-install eslint web scripts
       - run: make test
       - run: make web
       - run: make smoke

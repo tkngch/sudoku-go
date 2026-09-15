@@ -1,5 +1,8 @@
 SHELL := bash
-SOURCES := $(shell find . -name '*.go')
+
+# find skips node_modules, because npm installs the lint tooling there and one
+# package ships a Go file.
+SOURCES := $(shell find . -path ./node_modules -prune -o -name '*.go' -print)
 
 default: format vet lint test smoke
 
@@ -16,12 +19,11 @@ vet:
 	GOOS=js GOARCH=wasm go vet ./...
 
 .PHONY: lint
-lint:
-	gofmt -l .
+lint: node_modules
+	@gofmt -l $(SOURCES)
 	golangci-lint run ./...
 	GOOS=js GOARCH=wasm golangci-lint run ./...
-	node --check web/app.js
-	node --check web/worker.js
+	npx --no-install eslint web scripts
 
 .PHONY: test
 test:
@@ -45,18 +47,6 @@ WEB_STATIC := $(patsubst web/%,$(WEB_DIR)/%,$(wildcard web/*))
 .PHONY: web
 web: $(WEB_DIR)/sudoku.wasm $(WEB_DIR)/wasm_exec.js $(WEB_STATIC)
 
-$(WEB_DIR)/sudoku.wasm: $(SOURCES)
-	@mkdir -p $(WEB_DIR)
-	GOOS=js GOARCH=wasm go build -ldflags='-s -w' -o $@ ./cmd/sudoku-wasm
-
-$(WEB_DIR)/wasm_exec.js: $(WASM_EXEC)
-	@mkdir -p $(WEB_DIR)
-	cp $< $@
-
-$(WEB_DIR)/%: web/%
-	@mkdir -p $(WEB_DIR)
-	cp $< $@
-
 # The page needs an HTTP server. A file:// URL blocks fetch, the worker, and
 # the WebAssembly instantiation. Python 3.10 and later map .wasm to
 # application/wasm, so instantiateStreaming works.
@@ -71,6 +61,25 @@ smoke: web
 .PHONY: clean
 clean:
 	rm -rf build
+
+$(WEB_DIR)/sudoku.wasm: $(SOURCES)
+	@mkdir -p $(WEB_DIR)
+	GOOS=js GOARCH=wasm go build -ldflags='-s -w' -o $@ ./cmd/sudoku-wasm
+
+$(WEB_DIR)/wasm_exec.js: $(WASM_EXEC)
+	@mkdir -p $(WEB_DIR)
+	cp $< $@
+
+$(WEB_DIR)/%: web/%
+	@mkdir -p $(WEB_DIR)
+	cp $< $@
+
+package-lock.json: package.json
+	npm install --package-lock-only
+
+node_modules: package.json package-lock.json
+	npm ci
+	@touch $@
 
 PROF_DIR  := build/prof
 PROF_CPU := $(PROF_DIR)/cpu.prof

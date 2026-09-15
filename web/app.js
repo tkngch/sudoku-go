@@ -17,15 +17,15 @@
 	// TIMEOUT_MS is the limit for one solve.
 	const TIMEOUT_MS = 10000;
 
+	// HASH_DELAY_MS delays a write that the keyboard starts.
+	const HASH_DELAY_MS = 250;
+
 	const EMPTY = ".";
 	const HASH_PREFIX = "#p=";
 	const EMPTY_PUZZLE = EMPTY.repeat(CELL_COUNT);
 
 	// SKIP_KEYS empty a cell and move to the next one. A user who copies a
 	// puzzle then types it from left to right, with no pause at an empty cell.
-	//
-	// The dot and the zero both mark an empty cell in the input format, which
-	// the README documents. The space bar is the third natural way to skip.
 	const SKIP_KEYS = [EMPTY, "0", " "];
 
 	// MESSAGES holds one sentence per error kind of internal/web.ErrorKind.
@@ -60,6 +60,9 @@
 
 	// pendingPuzzle holds the grid that the open request asked about.
 	let pendingPuzzle = "";
+
+	// hashTimer holds the open delay of a write to the URL.
+	let hashTimer = 0;
 
 	// solutionShown reports whether the grid holds values from the solver.
 	let solutionShown = false;
@@ -121,11 +124,8 @@
 		return cells.map((cell) => (cell.value === "" ? EMPTY : cell.value)).join("");
 	}
 
-	// checkPuzzle mirrors puzzle.Parse and returns the error kind that the
-	// solver would report. It returns an empty string for a good puzzle.
-	//
-	// The page calls this before it fills the grid from the URL hash. The grid
-	// itself always holds a good puzzle, so it needs no check.
+	// checkPuzzle returns the error kind that the solver would report. It returns
+	// an empty string for a good puzzle.
 	function checkPuzzle(puzzle) {
 		if (puzzle.length !== CELL_COUNT) {
 			return "size";
@@ -191,15 +191,34 @@
 		updateHash();
 	}
 
-	// updateHash records the puzzle in the URL, so a link carries it. It uses
+	// writeHash records the puzzle in the URL, so a link carries it. It uses
 	// replaceState, so the back button leaves the page instead of the last edit.
-	function updateHash() {
+	function writeHash() {
 		const puzzle = readGrid();
 		const url = puzzle === EMPTY_PUZZLE
 			? window.location.pathname + window.location.search
 			: HASH_PREFIX + puzzle;
 
-		window.history.replaceState(null, "", url);
+		hashTimer = 0;
+
+		// The delay in updateHashSoon keeps the page inside the rate limit.
+		try {
+			window.history.replaceState(null, "", url);
+		} catch {
+			// The browser refused this write. The next write repairs the URL.
+		}
+	}
+
+	// updateHash writes the URL at once.
+	function updateHash() {
+		window.clearTimeout(hashTimer);
+		writeHash();
+	}
+
+	// updateHashSoon writes the URL after a pause.
+	function updateHashSoon() {
+		window.clearTimeout(hashTimer);
+		hashTimer = window.setTimeout(writeHash, HASH_DELAY_MS);
 	}
 
 	// restoreFromHash fills the grid from the URL.
@@ -210,11 +229,14 @@
 			return;
 		}
 
+		let puzzle;
+
 		try {
-			const puzzle = decodeURIComponent(hash.slice(HASH_PREFIX.length));
+			puzzle = decodeURIComponent(hash.slice(HASH_PREFIX.length));
 		} catch {
-  		showError(HASH_ERROR_MESSAGE);
-  		return;
+			showError(HASH_ERROR_MESSAGE);
+
+			return;
 		}
 
 		const kind = checkPuzzle(puzzle);
@@ -264,7 +286,7 @@
 		clearSolution(index);
 		cells[index].value = value;
 		clearError();
-		updateHash();
+		updateHashSoon();
 	}
 
 	function onKeyDown(event) {
