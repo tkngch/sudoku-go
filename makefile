@@ -1,5 +1,8 @@
 SHELL := bash
-SOURCES := $(shell find . -name '*.go')
+
+# find skips node_modules, because npm installs the lint tooling there and one
+# package ships a Go file.
+SOURCES := $(shell find . -path ./node_modules -prune -o -name '*.go' -print)
 
 default: format vet lint test smoke
 
@@ -16,10 +19,18 @@ vet:
 	GOOS=js GOARCH=wasm go vet ./...
 
 .PHONY: lint
-lint:
-	gofmt -l .
+lint: node_modules
+	@# gofmt -l prints the file names, but it exits with code 0. Test the
+	@# output, so a bad format fails this target.
+	@files=$$(gofmt -l $(SOURCES)); \
+	if [ -n "$$files" ]; then \
+		echo "These files are not gofmt-formatted:"; \
+		echo "$$files"; \
+		exit 1; \
+	fi
 	golangci-lint run ./...
 	GOOS=js GOARCH=wasm golangci-lint run ./...
+	npm run lint
 
 .PHONY: test
 test:
@@ -39,9 +50,25 @@ $(BIN): $(SOURCES)
 WEB_DIR    := build/web
 WASM_EXEC  := $(shell go env GOROOT)/lib/wasm/wasm_exec.js
 WEB_STATIC := $(patsubst web/%,$(WEB_DIR)/%,$(wildcard web/*))
+PORT ?= 8080
 
 .PHONY: web
 web: $(WEB_DIR)/sudoku.wasm $(WEB_DIR)/wasm_exec.js $(WEB_STATIC)
+
+# The page needs an HTTP server. A file:// URL blocks fetch, the worker, and
+# the WebAssembly instantiation. Python 3.10 and later map .wasm to
+# application/wasm, so instantiateStreaming works.
+.PHONY: serve
+serve: web
+	python3 -m http.server --directory $(WEB_DIR) $(PORT)
+
+.PHONY: smoke
+smoke: web
+	node scripts/smoke.mjs
+
+.PHONY: clean
+clean:
+	rm -rf build
 
 $(WEB_DIR)/sudoku.wasm: $(SOURCES)
 	@mkdir -p $(WEB_DIR)
@@ -55,13 +82,9 @@ $(WEB_DIR)/%: web/%
 	@mkdir -p $(WEB_DIR)
 	cp $< $@
 
-.PHONY: smoke
-smoke: web
-	node scripts/smoke.mjs
-
-.PHONY: clean
-clean:
-	rm -rf build
+node_modules: package.json package-lock.json
+	npm ci
+	@touch $@
 
 PROF_DIR  := build/prof
 PROF_CPU := $(PROF_DIR)/cpu.prof

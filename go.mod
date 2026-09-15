@@ -2,6 +2,11 @@ module github.com/tkngch/sudoku-go
 
 go 1.26
 
+// npm installs the lint tooling for the browser scripts into node_modules. One
+// package there ships a Go file, and the pattern ./... finds it. This
+// repository owns no file in that directory.
+ignore ./node_modules
+
 require github.com/stretchr/testify v1.11.1
 
 require (

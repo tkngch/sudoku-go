@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>sudoku-go</title>
+		<!-- The empty data URL stops the browser from a request for a favicon. -->
+		<link rel="icon" href="data:," />
+		<link rel="stylesheet" href="./style.css" />
+		<script src="./app.js" defer></script>
+	</head>
+
+	<body>
+		<main>
+			<h1>sudoku-go</h1>
+
+			<p class="lead">
+				Type a puzzle, then select <b>Solve</b>.
+			</p>
+
+			<div id="grid" class="grid"></div>
+
+			<div class="controls">
+				<button id="solve" type="button" disabled>Solve</button>
+				<button id="clear" type="button">Clear</button>
+				<select id="example" disabled aria-label="Load an example puzzle">
+					<option value="">Example…</option>
+				</select>
+			</div>
+
+			<p id="status" class="status" role="status" aria-live="polite">
+				The solver loads. Wait a moment.
+			</p>
+			<p id="alert" class="alert" role="alert"></p>
+
+			<footer>
+				<p>
+					<a href="https://github.com/tkngch/sudoku-go">Source code on GitHub</a>
+				</p>
+			</footer>
+		</main>
+	</body>
+</html>
