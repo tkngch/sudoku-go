@@ -20,10 +20,17 @@ vet:
 
 .PHONY: lint
 lint: node_modules
-	@gofmt -l $(SOURCES)
+	@# gofmt -l prints the file names, but it exits with code 0. Test the
+	@# output, so a bad format fails this target.
+	@files=$$(gofmt -l $(SOURCES)); \
+	if [ -n "$$files" ]; then \
+		echo "These files are not gofmt-formatted:"; \
+		echo "$$files"; \
+		exit 1; \
+	fi
 	golangci-lint run ./...
 	GOOS=js GOARCH=wasm golangci-lint run ./...
-	npx --no-install eslint web scripts
+	npm run lint
 
 .PHONY: test
 test:
@@ -43,6 +50,7 @@ $(BIN): $(SOURCES)
 WEB_DIR    := build/web
 WASM_EXEC  := $(shell go env GOROOT)/lib/wasm/wasm_exec.js
 WEB_STATIC := $(patsubst web/%,$(WEB_DIR)/%,$(wildcard web/*))
+PORT ?= 8080
 
 .PHONY: web
 web: $(WEB_DIR)/sudoku.wasm $(WEB_DIR)/wasm_exec.js $(WEB_STATIC)
@@ -52,7 +60,7 @@ web: $(WEB_DIR)/sudoku.wasm $(WEB_DIR)/wasm_exec.js $(WEB_STATIC)
 # application/wasm, so instantiateStreaming works.
 .PHONY: serve
 serve: web
-	python3 -m http.server --directory $(WEB_DIR) 8080
+	python3 -m http.server --directory $(WEB_DIR) $(PORT)
 
 .PHONY: smoke
 smoke: web
@@ -73,9 +81,6 @@ $(WEB_DIR)/wasm_exec.js: $(WASM_EXEC)
 $(WEB_DIR)/%: web/%
 	@mkdir -p $(WEB_DIR)
 	cp $< $@
-
-package-lock.json: package.json
-	npm install --package-lock-only
 
 node_modules: package.json package-lock.json
 	npm ci
