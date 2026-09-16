@@ -1,19 +1,18 @@
 name: Deploy
 
+# Start after the tests pass. A push to main starts the Build & Test workflow,
+# which has to complete before this Deploy workflow starts.
 on:
-  push:
+  workflow_run:
+    workflows: ["Build & Test"]
     branches: [main]
-  workflow_dispatch:
+    types: [completed]
 
-# The deploy job needs these permissions. id-token lets the job prove its
-# identity to the Pages service.
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
-# Let one deploy finish before the next one starts. Two quick pushes race the
-# deploy without this group.
+# Let one deploy finish before the next one starts. This group holds the second
+# push until the first deploy completes.
 concurrency:
   group: deploy
   cancel-in-progress: false
@@ -21,13 +20,19 @@ concurrency:
 jobs:
   build:
     name: Build the site
+    # Publish a tested commit only. A manual run must also come from main.
+    if: github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
+      # A workflow_run job checks out the head of the default branch by
+      # default. Name the tested commit here, so the deploy publishes it.
       - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.ref }}
       - uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
-      - uses: actions/configure-pages@v6
       - run: make web
       - uses: actions/upload-pages-artifact@v5
         with:
@@ -37,6 +42,11 @@ jobs:
     name: Deploy the site
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      # id-token lets the job prove its identity to the Pages service.
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
