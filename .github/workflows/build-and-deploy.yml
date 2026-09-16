@@ -1,4 +1,4 @@
-name: Build & Test
+name: Build & Deploy
 
 on:
   push:
@@ -9,9 +9,11 @@ on:
 permissions:
   contents: read
 
+# Cancel a pull request run when a new commit supersedes it. Keep a run on
+# main, because it deploys. A cancelled deploy leaves the site out of date.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   checks:
@@ -58,6 +60,34 @@ jobs:
       - run: make test
       - run: make web
       - run: make smoke
+      # Keep the site that make web built above. The deploy job sends it, so
+      # no second build is necessary.
+      - name: Upload the site
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: build/web
+
+  deploy:
+    name: Deploy the site
+    needs: checks
+    # Deploy a tested commit from this repository only. A push to main cannot
+    # come from a fork, so a pull request never reaches this job.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    # deploy-pages waits 10 minutes for the Pages service. Allow more time
+    # here, so the action reports the timeout itself.
+    timeout-minutes: 15
+    permissions:
+      pages: write
+      # id-token lets the job prove its identity to the Pages service.
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5
 
   bench:
     name: Benchmark (advisory)

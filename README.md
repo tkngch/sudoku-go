@@ -105,7 +105,7 @@ Solution
 
 The browser solves the puzzle. The Go solver compiles to WebAssembly, so no
 server reads the puzzle. The page supports the 9×9 grid only. The CLI above
-solves every size.
+solves all four sizes.
 
 To open the page on your machine:
 
@@ -125,13 +125,3 @@ make test     # run the tests with coverage and the race detector
 make bench    # run the solver benchmarks (ns/op and allocations)
 make smoke    # load the WebAssembly module in Node, then call it
 ```
-
-The targets need these tools:
-
-- `make format` and `make lint` need golangci-lint.
-- `make lint` also needs Node and npm.
-- `make smoke` needs Node.
-- `make serve` needs Python 3.10 or later, which maps `.wasm` to
-  `application/wasm`.
-
-The default target runs all of these targets, so it needs every tool.
