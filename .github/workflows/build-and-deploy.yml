@@ -19,6 +19,7 @@ jobs:
   checks:
     name: Lint and Test
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-go@v6
@@ -71,8 +72,6 @@ jobs:
   deploy:
     name: Deploy the site
     needs: checks
-    # Deploy a tested commit from this repository only. A push to main cannot
-    # come from a fork, so a pull request never reaches this job.
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     # deploy-pages waits 10 minutes for the Pages service. Allow more time
@@ -94,6 +93,7 @@ jobs:
     needs: checks
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     permissions:
       contents: read
       pull-requests: write
