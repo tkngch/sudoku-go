@@ -99,10 +99,31 @@ Solution
 +-----+-----+
 ```
 
+## Web UI
+
+<https://tkngch.github.io/sudoku-go/>
+
+The browser solves the puzzle. The Go solver compiles to WebAssembly, so no
+server reads the puzzle. The page supports the 9×9 grid only. The CLI above
+solves every size.
+
+To run the site on your machine:
+
+```sh
+make web      # build build/web/ (sudoku.wasm is approximately 2.7 MB)
+make serve    # serve it at http://localhost:8080
+```
+
+The page needs an HTTP server. A `file://` URL blocks the worker and the
+WebAssembly instantiation.
+
 ## Development
 
 ```sh
-make          # format, vet, lint, and test (the default target)
+make          # format, vet, lint, test, and smoke (the default target)
 make test     # run the tests with coverage and the race detector
 make bench    # run the solver benchmarks (ns/op and allocations)
+make smoke    # load the WebAssembly module in Node, then call it
 ```
+
+`make lint` and `make smoke` need Node and npm. `make serve` needs Python 3.

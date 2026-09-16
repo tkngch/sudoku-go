@@ -39,7 +39,7 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v9
         with:
-          version: v2.12
+          version: v2.13
       # The action above puts golangci-lint on PATH, so call the binary here.
       - name: golangci-lint (js/wasm)
         env:
