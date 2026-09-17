@@ -3,6 +3,7 @@ version: "2"
 linters:
   default: all
   disable:
+    - exhaustruct  # deprecated; exhaustruct_v5 replaces it
     - gomodguard  # deprecated
     - wsl  # deprecated
     - depguard

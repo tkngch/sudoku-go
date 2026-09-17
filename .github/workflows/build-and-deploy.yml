@@ -1,22 +1,24 @@
-name: Build & Test
+name: Build & Deploy
 
 on:
   push:
     branches: [main]
   pull_request:
-  workflow_dispatch:
 
 permissions:
   contents: read
 
+# Cancel a pull request run when a new commit supersedes it. Keep a run on
+# main, because it deploys. A cancelled deploy leaves the site out of date.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   checks:
     name: Lint and Test
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-go@v6
@@ -39,7 +41,7 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v9
         with:
-          version: v2.12
+          version: v2.13
       # The action above puts golangci-lint on PATH, so call the binary here.
       - name: golangci-lint (js/wasm)
         env:
@@ -58,12 +60,39 @@ jobs:
       - run: make test
       - run: make web
       - run: make smoke
+      # Keep the site that make web built above. The deploy job sends it, so
+      # no second build is necessary.
+      - name: Upload the site
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: build/web
+
+  deploy:
+    name: Deploy the site
+    needs: checks
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    # deploy-pages waits 10 minutes for the Pages service. Allow more time
+    # here, so the action reports the timeout itself.
+    timeout-minutes: 15
+    permissions:
+      pages: write
+      # id-token lets the job prove its identity to the Pages service.
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5
 
   bench:
     name: Benchmark (advisory)
     needs: checks
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: read
       pull-requests: write
