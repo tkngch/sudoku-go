@@ -443,7 +443,7 @@
 
 		solveButton.disabled = true;
 		showError(message);
-		setStatus("The solver restarts. Wait a moment.");
+		setStatus("Restarting.");
 	}
 
 	function onWorkerMessage(event) {
@@ -451,7 +451,7 @@
 
 		if (reply.type === "ready") {
 			solveButton.disabled = false;
-			setStatus("The solver is ready.");
+			setStatus("Ready.");
 
 			return;
 		}
@@ -484,7 +484,7 @@
 
 		if (reply.ok) {
 			showSolution(reply.solution);
-			setStatus(`The solver finished in ${reply.ms.toFixed(1)} ms.`);
+			setStatus(`Solved in ${reply.ms.toFixed(1)} ms.`);
 
 			return;
 		}
