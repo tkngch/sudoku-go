@@ -1,42 +1,40 @@
 <!doctype html>
 <html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>sudoku-go</title>
-		<!-- The empty data URL stops the browser from a request for a favicon. -->
-		<link rel="icon" href="data:," />
-		<link rel="stylesheet" href="./style.css" />
-		<script src="./app.js" defer></script>
-	</head>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>sudoku</title>
+    <!-- The empty data URL stops the browser from a request for a favicon. -->
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="./style.css" />
+    <script src="./app.js" defer></script>
+  </head>
 
-	<body>
-		<main>
-            <div style="align-items: baseline; display: flex; gap: 0.5em;">
-                <h1>sudoku</h1>
-                <span style="font-size: small;">
-                    (<a href="https://github.com/tkngch/sudoku-go">Source</a>)
-                </span>
-            </div>
+  <body>
+    <main>
+      <div style="align-items: baseline; display: flex; gap: 0.5em">
+        <h1>sudoku</h1>
+        <span style="font-size: small">
+          (<a href="https://github.com/tkngch/sudoku-go">Source</a>)
+        </span>
+      </div>
 
-			<p class="lead">
-				Type a puzzle, then select <b>Solve</b>.
-			</p>
+      <p class="lead">Type a puzzle, then select <b>Solve</b>.</p>
 
-			<div id="grid" class="grid"></div>
+      <div id="grid" class="grid"></div>
 
-			<div class="controls">
-				<button id="solve" type="button" disabled>Solve</button>
-				<button id="clear" type="button">Clear</button>
-				<select id="example" disabled aria-label="Load an example puzzle">
-					<option value="">Example…</option>
-				</select>
-			</div>
+      <div class="controls">
+        <button id="solve" type="button" disabled>Solve</button>
+        <button id="clear" type="button">Clear</button>
+        <select id="example" disabled aria-label="Load an example puzzle">
+          <option value="">Example…</option>
+        </select>
+      </div>
 
-			<p id="status" class="status" role="status" aria-live="polite">
-			   Loading.
-			</p>
-			<p id="alert" class="alert" role="alert"></p>
-		</main>
-	</body>
+      <p id="status" class="status" role="status" aria-live="polite">
+        Loading.
+      </p>
+      <p id="alert" class="alert" role="alert"></p>
+    </main>
+  </body>
 </html>
