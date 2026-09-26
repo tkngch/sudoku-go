@@ -7,11 +7,12 @@ SOURCES := $(shell find . -path ./node_modules -prune -o -name '*.go' -print)
 default: format vet lint test smoke
 
 .PHONY: format
-format:
+format: node_modules
 	golangci-lint fmt ./...
 	golangci-lint run --fix ./...
 	GOOS=js GOARCH=wasm golangci-lint fmt ./...
 	GOOS=js GOARCH=wasm golangci-lint run --fix ./...
+	npm run format
 
 .PHONY: vet
 vet:
@@ -30,6 +31,7 @@ lint: node_modules
 	fi
 	golangci-lint run ./...
 	GOOS=js GOARCH=wasm golangci-lint run ./...
+	npm run format:check
 	npm run lint
 
 .PHONY: test

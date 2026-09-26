@@ -1,13 +1,16 @@
 {
-	"name": "sudoku-go-web",
-	"private": true,
-	"description": "Lint tooling for the browser scripts.",
-	"scripts": {
-		"lint": "eslint web scripts"
-	},
-	"devDependencies": {
-		"@eslint/js": "^10.0.1",
-		"eslint": "^10.10.0",
-		"globals": "^17.12.0"
-	}
+  "name": "sudoku-go-web",
+  "private": true,
+  "description": "Lint and format tooling for the browser scripts.",
+  "scripts": {
+    "lint": "eslint web scripts",
+    "format": "prettier --write web scripts eslint.config.mjs package.json",
+    "format:check": "prettier --check web scripts eslint.config.mjs package.json"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.10.0",
+    "globals": "^17.12.0",
+    "prettier": "^3.9.9"
+  }
 }

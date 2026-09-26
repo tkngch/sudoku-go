@@ -20,50 +20,52 @@ const solution = "1234341243212143";
 let failures = 0;
 
 function check(label, actual, expected) {
-	if (actual !== expected) {
-		console.error(`FAIL ${label}: want ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
-		failures += 1;
-	}
+  if (actual !== expected) {
+    console.error(
+      `FAIL ${label}: want ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`,
+    );
+    failures += 1;
+  }
 }
 
 function runChecks() {
-	const ok = globalThis.sudoku.solve(puzzle);
-	check("solve.ok", ok.ok, true);
-	check("solve.solution", ok.solution, solution);
-	check("solve.kind", ok.kind, "");
+  const ok = globalThis.sudoku.solve(puzzle);
+  check("solve.ok", ok.ok, true);
+  check("solve.solution", ok.solution, solution);
+  check("solve.kind", ok.kind, "");
 
-	const bad = globalThis.sudoku.solve("z234" + "3.12" + "43.1" + "214.");
-	check("character.ok", bad.ok, false);
-	check("character.solution", bad.solution, "");
-	check("character.kind", bad.kind, "character");
+  const bad = globalThis.sudoku.solve("z234" + "3.12" + "43.1" + "214.");
+  check("character.ok", bad.ok, false);
+  check("character.solution", bad.solution, "");
+  check("character.kind", bad.kind, "character");
 
-	const short = globalThis.sudoku.solve("123");
-	check("size.kind", short.kind, "size");
+  const short = globalThis.sudoku.solve("123");
+  check("size.kind", short.kind, "size");
 
-	// Prove that solve rejects a long input by its length. The checks below run
-	// after this one, so they also prove that the module stays alive.
-	const long = globalThis.sudoku.solve("1".repeat(1 << 20));
-	check("long.ok", long.ok, false);
-	check("long.solution", long.solution, "");
-	check("long.kind", long.kind, "size");
+  // Prove that solve rejects a long input by its length. The checks below run
+  // after this one, so they also prove that the module stays alive.
+  const long = globalThis.sudoku.solve("1".repeat(1 << 20));
+  check("long.ok", long.ok, false);
+  check("long.solution", long.solution, "");
+  check("long.kind", long.kind, "size");
 
-	const noArg = globalThis.sudoku.solve();
-	check("noArg.ok", noArg.ok, false);
-	check("noArg.kind", noArg.kind, "unknown");
+  const noArg = globalThis.sudoku.solve();
+  check("noArg.ok", noArg.ok, false);
+  check("noArg.kind", noArg.kind, "unknown");
 
-	if (failures > 0) {
-		console.error(`smoke failed: ${failures} check(s)`);
-		process.exit(1);
-	}
+  if (failures > 0) {
+    console.error(`smoke failed: ${failures} check(s)`);
+    process.exit(1);
+  }
 
-	console.log("smoke ok");
-	process.exit(0);
+  console.log("smoke ok");
+  process.exit(0);
 }
 
 // Stop the job when the module does not report its readiness.
 setTimeout(() => {
-	console.error("smoke failed: __sudokuReady did not run within 30s");
-	process.exit(1);
+  console.error("smoke failed: __sudokuReady did not run within 30s");
+  process.exit(1);
 }, 30_000);
 
 // Run the checks from a timer.
@@ -79,8 +81,8 @@ await import(new URL("wasm_exec.js", webDir).href);
 
 const go = new Go();
 const { instance } = await WebAssembly.instantiate(
-	readFileSync(new URL("sudoku.wasm", webDir)),
-	go.importObject,
+  readFileSync(new URL("sudoku.wasm", webDir)),
+  go.importObject,
 );
 
 go.run(instance);
