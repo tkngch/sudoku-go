@@ -57,6 +57,20 @@ h1 {
   font-size: 1.5rem;
 }
 
+/* The row holds the title and the source link. flex-wrap lets the link drop
+   below the title on a narrow viewport. */
+.title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.source-link {
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
 .lead {
   margin: 0 0 1.25rem;
   color: var(--muted);

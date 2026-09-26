@@ -403,6 +403,11 @@
     // that the user typed and no value from an earlier solve.
     const puzzle = readGrid();
 
+    // Write the URL now, and stop the delayed write that the keyboard armed.
+    // The delayed write would otherwise run after showSolution fills the grid,
+    // and it would put the solution in the link.
+    updateHash();
+
     requestId += 1;
     pendingId = requestId;
     pendingPuzzle = puzzle;
