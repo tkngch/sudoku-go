@@ -1,0 +1,5 @@
+# npm regenerates this file, so a format pass only adds noise.
+package-lock.json
+
+# make writes the site here.
+build
