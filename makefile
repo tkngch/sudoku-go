@@ -39,8 +39,8 @@ vulncheck: build/govulncheck
 	$< ./...
 	GOOS=js GOARCH=wasm $< ./...
 
-build/govulncheck:
-	go build -o $(GOVULNCHECK) golang.org/x/vuln/cmd/govulncheck
+build/govulncheck: go.mod go.sum
+	go build -o $@ golang.org/x/vuln/cmd/govulncheck
 
 .PHONY: test
 test:
