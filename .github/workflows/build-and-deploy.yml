@@ -20,8 +20,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-go@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
       - name: Check formatting
@@ -50,7 +50,7 @@ jobs:
         run: golangci-lint run ./...
       # Install node after the Go checks. npm writes node_modules, and one
       # package there ships a Go file that the Go linters would report.
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: lts/*
           cache: npm
@@ -100,17 +100,17 @@ jobs:
       pull-requests: write
     steps:
       - name: Check out PR head
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Check out PR base
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.base.sha }}
           path: base
 
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
 
