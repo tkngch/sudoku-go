@@ -1,6 +1,6 @@
 module github.com/tkngch/sudoku-go
 
-go 1.26.0
+go 1.26.11
 
 // npm installs the lint tooling for the browser scripts into node_modules. One
 // package there ships a Go file, and the pattern ./... finds it. This

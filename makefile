@@ -4,7 +4,7 @@ SHELL := bash
 # package ships a Go file.
 SOURCES := $(shell find . -path ./node_modules -prune -o -name '*.go' -print)
 
-default: format vet lint test smoke
+default: format vet lint vulncheck test smoke
 
 .PHONY: format
 format: node_modules
@@ -33,6 +33,14 @@ lint: node_modules
 	GOOS=js GOARCH=wasm golangci-lint run ./...
 	npm run format:check
 	npm run lint
+
+.PHONY: vulncheck
+vulncheck: build/govulncheck
+	$< ./...
+	GOOS=js GOARCH=wasm $< ./...
+
+build/govulncheck:
+	go build -o $(GOVULNCHECK) golang.org/x/vuln/cmd/govulncheck
 
 .PHONY: test
 test:
